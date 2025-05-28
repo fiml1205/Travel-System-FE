@@ -279,11 +279,11 @@ export default function Header() {
                     <input type="text" placeholder="Nhập từ khóa tìm kiếm..." className="h-12 rounded-xl w-full max-w-xl pl-4" />
                     <Search className="absolute top-3 right-3 text-slate-500" />
                 </div>
-                <div className="w-full max-w-xl flex flex-col gap-4 lg:gap-0 lg:flex-row select-none">
+                {/* <div className="w-full max-w-xl flex flex-col gap-4 lg:gap-0 lg:flex-row select-none">
                     <Combobox listData={listCityRebuild} placeholder={'tỉnh thành'} borderRadius={2} handleFunction={selectCity} />
                     <Combobox listData={listDistrictRebuild} placeholder={'quận huyện'} borderRadius={1} handleFunction={selectDistrict} />
                     <Button className="lg:rounded-l-none h-12 font-semibold">Tìm kiếm</Button>
-                </div>
+                </div> */}
             </div>
             {/* block login, register */}
             {showPopupAuthen ?

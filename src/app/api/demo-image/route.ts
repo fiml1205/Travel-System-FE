@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     }
 
     const timestamp = Math.floor(Date.now() / 1000);
-    const sceneId = `scene_${timestamp}`;
+    const sceneId = `${timestamp}`;
     const uploadPath = path.resolve(`./public/uploads/${userId}-before`, `${sceneId}.jpg`);
     const outputDir = path.resolve(`./public/uploads/${userId}-before`);
     const finalDir = path.resolve(`./public/uploads/${userId}/${sceneId}`);
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       message: '✅ Success',
       sceneId,
       original: `http://localhost:3000/uploads/${userId}/${sceneId}/original.jpg`,
-      paths: publicFacePaths, // dùng cho RenderImage360
+      paths: publicFacePaths,
     });
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Unknown error' }, { status: 500 });

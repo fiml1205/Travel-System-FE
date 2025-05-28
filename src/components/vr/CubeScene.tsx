@@ -14,13 +14,14 @@ interface Hotspot {
 }
 
 interface CubeSceneProps {
+  projectId: any;
   textures: THREE.Texture[];
   hotspots?: Hotspot[];
   onRequestTransition?: (nextSceneId: string) => void;
   onPreloadScene?: (nextSceneId: string) => void;
 }
 
-export default function CubeScene({ textures, hotspots = [], onRequestTransition, onPreloadScene }: CubeSceneProps) {
+export default function CubeScene({projectId, textures, hotspots = [], onRequestTransition, onPreloadScene }: CubeSceneProps) {
   const { camera } = useThree();
   const controlsRef = useRef<any>(null);
   const [animating, setAnimating] = useState(false);
@@ -119,6 +120,7 @@ export default function CubeScene({ textures, hotspots = [], onRequestTransition
     if (!container) return;
 
     hotspots.forEach((hotspot) => {
+      console.log(hotspot)
       const id = `hotspot-${hotspot.targetSceneId}`;
       let wrapper = document.getElementById(id) as HTMLDivElement | null;
 
@@ -133,7 +135,7 @@ export default function CubeScene({ textures, hotspots = [], onRequestTransition
         wrapper.style.pointerEvents = 'none';
 
         const img = document.createElement('img');
-        img.src = hotspot.imageUrl;
+        img.src = `http://localhost:3000/projects/${projectId}/${hotspot.targetSceneId}/original.jpg`;
         img.style.width = '50px';
         img.style.height = '50px';
         img.style.borderRadius = '50%';

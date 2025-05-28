@@ -17,10 +17,12 @@ interface Scene {
   cubePaths: string[];
   hotspots: Hotspot[];
   audio?: string;
+  isFirst?: boolean;
 }
 
 interface BlockImage360Props {
   userId: string;
+  onScenesChange?: (scenes: Scene[]) => void
 }
 
 function ClickHandler({ onAdd, enabled }: { onAdd: (pos: [number, number, number]) => void; enabled: boolean }) {
@@ -72,13 +74,17 @@ function HotspotMarker({ position, label }: { position: [number, number, number]
   );
 }
 
-export default function BlockImage360({ userId }: BlockImage360Props) {
+export default function BlockImage360({ userId, onScenesChange }: BlockImage360Props) {
   const [showTargetList, setShowTargetList] = useState<number | null>(null);
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [currentSceneIndex, setCurrentSceneIndex] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(false);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (onScenesChange) onScenesChange(scenes);
+  }, [scenes, onScenesChange]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -161,6 +167,14 @@ export default function BlockImage360({ userId }: BlockImage360Props) {
     setScenes(updatedScenes);
   };
 
+  const setFirstScene = (index: number) => {
+    const updated = scenes.map((scene, i) => ({
+      ...scene,
+      isFirst: i === index,
+    }));
+    setScenes(updated);
+  };
+
   const currentScene = currentSceneIndex !== null ? scenes[currentSceneIndex] : null;
 
   return (
@@ -186,6 +200,15 @@ export default function BlockImage360({ userId }: BlockImage360Props) {
                 className="absolute top-0 right-0 bg-red-600 text-white rounded px-1"
               >
                 ✕
+              </button>
+              <button
+                onClick={() => setFirstScene(idx)}
+                className={`text-xs mt-1 px-2 py-0.5 rounded ${currentSceneIndex === idx && scenes[idx].isFirst
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-200'
+                  }`}
+              >
+                {scenes[idx].isFirst ? 'Ảnh đầu tiên' : 'Chọn làm đầu tiên'}
               </button>
             </div>
           ))}

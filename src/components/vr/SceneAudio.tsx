@@ -17,6 +17,7 @@ export default function SceneAudio({ audioUrl }: SceneAudioProps) {
     audioEl.src = audioUrl;
     if (playing) audioEl.play().catch(() => setPlaying(false));
   }, [audioUrl]);
+  console.log(audioUrl)
 
   return (
     <>
