@@ -22,6 +22,7 @@
   --font-size-8px: 8px;
   --max-width-400: 400px;
   --max-width-1200: 1200px;
+  --width-80vw: 80vw;
 }
 
 :root {

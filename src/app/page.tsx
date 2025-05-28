@@ -29,7 +29,7 @@ export default function Home() {
       <div className="relative">
         <div className="w-3/4 p-8 mx-auto mb-5 flex flex-col gap-6 xl:max-w-1200px">
           <div className="w-full">
-            <p className="font-semibold text-lg	mb-3">Địa điểm du lịch khu vực Hà Nội</p>
+            <p className="font-semibold text-lg	mb-3">Địa điểm du lịch HOT</p>
             <div className="flex flex-col items-center justify-between gap-10 md:flex-row">
               <div className="flex flex-col gap-2 rounded-lg overflow-hidden shadow-lg w-full max-w-400px shadow-color-dark">
                 <div>
@@ -148,7 +148,7 @@ export default function Home() {
             </div>
           </div>
           <div className="w-full">
-            <p className="font-semibold text-lg	mb-3">Địa điểm du lịch khu vực Hồ Chí Minh</p>
+            <p className="font-semibold text-lg	mb-3">Địa điểm du lịch mới cập nhật</p>
             <div className="flex flex-col items-center justify-between gap-10 md:flex-row">
               <div className="flex flex-col gap-2 rounded-lg overflow-hidden shadow-lg w-full max-w-400px shadow-color-dark">
                 <div>
@@ -267,7 +267,7 @@ export default function Home() {
             </div>
           </div>
           <div className="w-full">
-            <p className="font-semibold text-lg	mb-3">Địa điểm du lịch khu vực Đà Nẵng</p>
+            <p className="font-semibold text-lg	mb-3">Địa điểm du lịch nước ngoài</p>
             <div className="flex flex-col items-center justify-between gap-10 md:flex-row">
               <div className="flex flex-col gap-2 rounded-lg overflow-hidden shadow-lg w-full max-w-400px shadow-color-dark">
                 <div>

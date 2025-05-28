@@ -47,7 +47,7 @@ export default function ProjectDetail() {
             audio: '/projects/1/scene_1747992165/scene_1747992165.mp3',
             hotspots: [
                 {
-                    position: [6, 0, 0],
+                    position: [4.86, 0.9074435149692504, -5],
                     targetSceneId: 'scene_1747992398',
                     label: 'Lối vào chính',
                     imageUrl: '/projects/1/scene_1747992398/original.jpg',

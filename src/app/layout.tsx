@@ -7,16 +7,17 @@ import Image from "next/image";
 import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
 import { ThemeProvider } from "@/components/theme-provider"
+import UserProvider from '@/contexts/UserProvider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// const geistMono = Geist_Mono({
+//   variable: "--font-geist-mono",
+//   subsets: ["latin"],
+// });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -30,19 +31,20 @@ export default async function RootLayout({ children, }: Readonly<{ children: Rea
     if (SSToken) {
       try {
         const decoded: any = jwtDecode(SSToken.value);
-        return decoded?.data || {};
+        return decoded?.data || null;
       } catch (error) {
         console.error("JWT decoding error:", error);
-        return {};
+        return null;
       }
     } else {
-      return {}
+      return null
     }
   }
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
+        className={`${geistSans.variable} antialiased relative`}
+      // className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
       >
         <ThemeProvider
           attribute="class"
@@ -50,12 +52,14 @@ export default async function RootLayout({ children, }: Readonly<{ children: Rea
           enableSystem
           disableTransitionOnChange
         >
-          <div className="fixed bottom-4 right-4 bg-default-color p-3 rounded-full cursor-pointer">
-            <Image src="/images/chatbot.webp" alt="" width={30} height={30} />
-          </div>
-          <Header></Header>
-          {children}
-          <Footer></Footer>
+          <UserProvider value={userInfo()}>
+            <div className="fixed bottom-4 right-4 bg-default-color p-3 rounded-full cursor-pointer">
+              <Image src="/images/chatbot.webp" alt="" width={30} height={30} />
+            </div>
+            <Header></Header>
+            {children}
+            <Footer></Footer>
+          </UserProvider>
         </ThemeProvider>
       </body>
     </html>

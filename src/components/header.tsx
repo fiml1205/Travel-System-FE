@@ -14,13 +14,7 @@ import { listCity, listDistrict } from "@/utilities/constant"
 import { validatePhone, validateEmail, validateNoSqli, validatePassword } from "@/utilities/functions";
 import { loginApi, registerApi } from '@/app/api/authentication'
 import LoadingAnimate from '@/components/loadingAnimate'
-
-type UserInfor = {
-    avatar: string;
-    userName: string;
-    email?: string;
-    // v.v.
-}
+import { useUser } from '@/contexts/UserContext';
 
 export default function Header() {
     // handle event
@@ -37,17 +31,9 @@ export default function Header() {
     const [notiErrorAuthen, setNotiErrorAuthen] = useState<any>()
     const [stateApiAuthen, setStateApiAuthen] = useState<boolean>(true)
     // handle data
-    const [userInfor, setUserInfor] = useState<UserInfor>()
+    const userInfor = useUser()
 
     useEffect(() => {
-        const SSToken = document.cookie
-            .split("; ")
-            .find(row => row.startsWith("SSToken="))
-            ?.split("=")[1];
-        if (SSToken) {
-            const decode: any = jwtDecode(SSToken)
-            setUserInfor(decode?.data);
-        }
         const arrayListCityRebuild = listCity.map(item => ({
             value: item._id,
             label: item.name
@@ -166,9 +152,11 @@ export default function Header() {
                     </div>
                 </div>
                 <div className="flex gap-2 items-center">
+                    {/* dark mode */}
                     <ModeToggle />
-                    <div ref={notiRef} className="relative bg-slate-200 rounded-full w-9 h-9 flex justify-center items-center cursor-pointer select-none" onClick={() => setShowNoti(!showNoti)}>
-                        <Bell className="w-5 h-5" />
+                    {/* notification */}
+                    <div ref={notiRef} className="relative bg-slate-200 rounded-full w-9 h-9 flex justify-center items-center cursor-pointer" onClick={() => setShowNoti(!showNoti)}>
+                        <Bell className="w-5 h-5 select-none" />
                         <span className="absolute -top-2 -right-1 w-5 h-5 rounded-full bg-default-color text-white text-xs flex justify-center items-center">20</span>
                         {showNoti &&
                             <div ref={notiTailRef} className="absolute min-w-80 w-full right-0 top-12 max-h-screen overflow-y-scroll z-10 bg-white boder border-t boder-solid border-slate-200 shadow-md shadow-gray-600 scrollbar-custom" onClick={(event) => event.stopPropagation()}>
@@ -182,8 +170,8 @@ export default function Header() {
                                             <User className="w-8 h-8" />
                                         </div>
                                         <div className="w-calc(100%-56px)">
-                                            <p className="font-semibold text-color-dark">Sân vận động Thúy Lĩnh</p>
-                                            <p className="text-gray-600 leading-5 text-sm">Đơn hàng giày thể thao của bạn đã được xác nhận</p>
+                                            <p className="font-semibold text-color-dark">Du lịch Thượng Hải Trung Quốc</p>
+                                            <p className="text-gray-600 leading-5 text-sm">Nguyễn Tú Mai đã đăng ký Du lịch Thượng Hải Trung Quốc. Liên hệ 0968221320 để trao đổi</p>
                                             <div className="flex justify-between items-center">
                                                 <p className="text-gray-600 mt-2 text-sm">09-10-2024 10:30:03</p>
                                                 <Trash2 className="w-4 h-4 xl:hidden group-hover:block text-color-dark" onClick={() => deleteNoti()} />
@@ -195,9 +183,9 @@ export default function Header() {
                         }
                     </div>
                     {userInfor ? (
-                        <div ref={avatarRef} className="md:flex p-2 gap-2 cursor-pointer items-center relative hidden select-none" onClick={() => setShowAvatar(!showAvatar)}>
+                        <div ref={avatarRef} className="md:flex h-9 gap-2 cursor-pointer items-center relative hidden select-none" onClick={() => setShowAvatar(!showAvatar)}>
                             {userInfor.avatar ? (
-                                <Image src={userInfor.avatar} alt="User avatar" width={36} height={36} className="rounded-full" />
+                                <img src={userInfor.avatar} alt="User avatar" width={36} height={36} className="rounded-full w-9 h-9 object-cover" />
                             ) : (
                                 <div className="bg-slate-200 rounded-full w-9 h-9 flex justify-center items-center">
                                     <User className="w-5 h-5" />
