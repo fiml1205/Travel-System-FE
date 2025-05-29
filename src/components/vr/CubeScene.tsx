@@ -135,7 +135,7 @@ export default function CubeScene({projectId, textures, hotspots = [], onRequest
         wrapper.style.pointerEvents = 'none';
 
         const img = document.createElement('img');
-        img.src = `http://localhost:3000/projects/${projectId}/${hotspot.targetSceneId}/original.jpg`;
+        img.src = `/uploads/projects/${projectId}/${hotspot.targetSceneId}/original.jpg`;
         img.style.width = '50px';
         img.style.height = '50px';
         img.style.borderRadius = '50%';

@@ -6,7 +6,7 @@ export async function preloadCubeTextures(sceneId: string, projectId: number): P
 
   const textures = await Promise.all(
     faces.map(face =>
-      loader.loadAsync(`/projects/${projectId}/${sceneId}/${face}.jpg`)
+      loader.loadAsync(`/uploads/projects/${projectId}/${sceneId}/${face}.jpg`)
     )
   );
 
