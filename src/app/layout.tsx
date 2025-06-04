@@ -8,16 +8,13 @@ import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
 import { ThemeProvider } from "@/components/theme-provider"
 import UserProvider from '@/contexts/UserProvider';
+import { AuthModalProvider } from '@/contexts/AuthModalContext';
+import AuthModal from '@/components/auth/AuthModal';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
-
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// });
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -27,24 +24,40 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children, }: Readonly<{ children: React.ReactNode; }>) {
   const cookieStore = await cookies();
   const SSToken: any = cookieStore.get('SSToken');
-  function userInfo() {
-    if (SSToken) {
-      try {
-        const decoded: any = jwtDecode(SSToken.value);
-        return decoded?.data || null;
-      } catch (error) {
-        console.error("JWT decoding error:", error);
+  async function userInfor(): Promise<any> {
+    if (!SSToken) return null;
+
+    try {
+      const decoded: any = jwtDecode(SSToken.value);
+      if (!decoded?.data) return null;
+
+      const res = await fetch('http://localhost:3000/api/user', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${SSToken.value}`,
+        },
+        cache: 'no-store',
+      });
+
+      if (!res.ok) {
+        console.error('Failed to fetch user info:', res.status);
         return null;
       }
-    } else {
-      return null
+
+      const response = await res.json();
+      return response?.data?.userInfor || decoded.data || null;
+    } catch (error) {
+      console.error("Error in userInfor():", error);
+      return null;
     }
   }
+
+  const infor = await userInfor();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} antialiased relative`}
-      // className={`${geistSans.variable} ${geistMono.variable} antialiased relative`}
       >
         <ThemeProvider
           attribute="class"
@@ -52,13 +65,16 @@ export default async function RootLayout({ children, }: Readonly<{ children: Rea
           enableSystem
           disableTransitionOnChange
         >
-          <UserProvider value={userInfo()}>
-            <div className="fixed bottom-4 right-4 bg-default-color p-3 rounded-full cursor-pointer">
-              <Image src="/images/chatbot.webp" alt="" width={30} height={30} />
-            </div>
-            <Header></Header>
-            {children}
-            <Footer></Footer>
+          <UserProvider value={infor}>
+            <AuthModalProvider>
+              <AuthModal /> {/* Hiển thị modal nếu mở */}
+              <div className="fixed bottom-4 right-4 bg-default-color p-3 rounded-full cursor-pointer">
+                <Image src="/images/chatbot.webp" alt="" width={30} height={30} />
+              </div>
+              <Header></Header>
+              {children}
+              <Footer></Footer>
+            </AuthModalProvider>
           </UserProvider>
         </ThemeProvider>
       </body>

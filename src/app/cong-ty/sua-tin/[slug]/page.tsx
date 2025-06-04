@@ -41,9 +41,7 @@ export default function EditTourPage() {
     fetchData();
   }, [projectId]);
 
-  console.log(scenes)
-
-  const handleUpdate = async () => { 
+  const handleUpdate = async () => {
     const body = {
       ...tour,
       scenes,
@@ -52,6 +50,7 @@ export default function EditTourPage() {
     await editTour(body, projectId);
 
     alert('✅ Cập nhật tour thành công');
+    window.location.href = 'http://localhost:3000/cong-ty/danh-sach-tour'
   };
 
   if (loading) return <div className="p-6">Đang tải dữ liệu...</div>;

@@ -171,3 +171,25 @@
 .hotspot.clicked {
   transform: translate(-50%, -50%) scale(2);
 }
+
+.tiptap img {
+  max-width: 800px;
+  max-height: 450px;
+  width: auto;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+@keyframes rainbowText {
+  0% { color: #ff4d4d; }
+  20% { color: #ffa500; }
+  40% { color: #ffff00; }
+  60% { color: #00ff00; }
+  80% { color: #00bfff; }
+  100% { color: #ff4d4d; }
+}
+
+.fancy-text {
+  animation: rainbowText 3s infinite;
+}

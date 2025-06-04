@@ -188,7 +188,7 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
 
   return (
     <div className="space-y-4">
-      <input type="file" accept="image/*" onChange={handleUpload} />
+      <input type="file" accept="image/*" className='border-solid border border-gray-400 rounded-sm pl-1.5' onChange={handleUpload} />
       {loading && <p className="text-blue-600 mt-2">Đang xử lý ảnh...</p>}
       {scenes.length > 0 && (
         <div className="flex gap-2 overflow-x-auto border p-2 rounded">
