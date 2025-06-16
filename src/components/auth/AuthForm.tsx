@@ -9,13 +9,15 @@ import { validatePhone, validateEmail, validateNoSqli, validatePassword } from "
 import { useState } from "react";
 
 export default function AuthForm({
-  mode = 1, // 1: login, 2: register
-  userType = 1, // 1: customer, 2: company
+  mode = 1,
+  userType = 1,
   onSuccess,
+  setMode,
 }: {
   mode?: number;
   userType?: number;
   onSuccess?: () => void;
+  setMode: (mode: number) => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -110,6 +112,29 @@ export default function AuthForm({
 
         <div className="flex justify-center">
           <Button type="submit" className="m-auto">Đăng {mode === 1 ? 'nhập' : 'ký'}</Button>
+        </div>
+        <div className="text-center mt-4 text-sm">
+          {mode === 1 ? (
+            <>
+              Chưa có tài khoản?{" "}
+              <span
+                className="text-blue-600 cursor-pointer hover:underline"
+                onClick={() => setMode(2)}
+              >
+                Đăng ký
+              </span>
+            </>
+          ) : (
+            <>
+              Đã có tài khoản?{" "}
+              <span
+                className="text-blue-600 cursor-pointer hover:underline"
+                onClick={() => setMode(1)}
+              >
+                Đăng nhập
+              </span>
+            </>
+          )}
         </div>
       </form>
       {loading && <LoadingAnimate />}

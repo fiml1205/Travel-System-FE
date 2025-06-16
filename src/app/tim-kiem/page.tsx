@@ -1,53 +1,69 @@
-'use client'
+'use client';
 
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getListProjectOwn } from '@/app/api/project';
-import Image from "next/image";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
-import 'swiper/swiper-bundle.css';
-import Link from "next/link";
-import { Star, MapPinHouse } from "lucide-react"
 import { rangePrice, listCity } from '@/utilities/constant';
-import { useUser } from '@/contexts/UserContext';
+import { Star, MapPinHouse } from "lucide-react"
+import Link from 'next/link';
 
-export default function listTour() {
-    const userInfor = useUser();
-    const [listProject, setListProject] = useState<any>(null)
+interface ProjectData {
+    projectId: number;
+    title: string;
+    description: string;
+    coverImage: string;
+    departureDate: string;
+    price: number;
+    sale?: string;
+}
+
+export default function SearchPage() {
+    const searchParams = useSearchParams();
+    const [projects, setProjects] = useState<ProjectData[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    const keyword = searchParams.get('keyword');
+    const city = searchParams.get('city');
+    const price = searchParams.get('price');
+
     useEffect(() => {
-        if(userInfor && userInfor.type == 2) {
-            const ListProject = async () => {
-                try {
-                    const res = await getListProjectOwn();
-                    setListProject(res?.data.listProject);
-                } catch (error) {
-                    console.error('Lỗi lấy thông báo:', error);
-                } finally {
-                    setIsLoading(false);
+        const fetchSearchResults = async () => {
+            try {
+                const queryParams = new URLSearchParams();
+                if (keyword) queryParams.set('keyword', keyword);
+                if (city) queryParams.set('city', city);
+                if (price) queryParams.set('price', price);
+
+                const res = await fetch(`http://localhost:8000/api/project/search?${queryParams.toString()}`);
+                const data = await res.json();
+
+                if (data.success) {
+                    setProjects(data.listProject || []);
                 }
-            };
-    
-            ListProject();
-        } else {
-            window.location.href = '/'
-        }
-    }, []);
+            } catch (err) {
+                console.error("Lỗi tìm kiếm:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchSearchResults();
+    }, [keyword, city, price]);
 
     return (
         <div className="relative">
             <div className="w-3/4 p-8 mx-auto mb-5 flex flex-col gap-6 xl:max-w-1200px">
-                <h1 className='text-center font-semibold text-2xl m-3'>Danh sách tour đã tạo</h1>
+                <h1 className="text-xl font-bold mb-4">🔍 Kết quả tìm kiếm</h1>
                 {isLoading ? (
                     <p>Đang tải kết quả...</p>
-                ) : listProject.length === 0 ? (
+                ) : projects.length === 0 ? (
                     <p>Không tìm thấy tour nào phù hợp.</p>
                 ) : (
                     <div className="w-full">
                         <div className='w-full'>
                             <div className="flex flex-col items-center justify-between gap-10 md:flex-row flex-wrap">
-                                {listProject && listProject.map((project: any) => {
+                                {projects && projects.map((project: any) => {
                                     const images: any = [];
                                     // const images = project.scenes.map((scene: any) => scene.originalImage);
                                     const firstScene = project.scenes.find((scene: any) => scene.isFirst) || project.scenes[0];

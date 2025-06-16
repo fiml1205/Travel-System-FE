@@ -4,32 +4,43 @@ import { useEffect, useRef, useState } from 'react';
 import Cookies from 'js-cookie';
 import Link from 'next/link';
 import Image from 'next/image';
-import { AlignJustify, Bell, BookOpenText, ChevronDown, Gem, Headset, Heart, LogOut, Search, Smartphone, Trash2, User, X } from 'lucide-react';
+import { AlignJustify, Bell, BookOpenText, ChevronDown, Gem, Headset, Heart, LogOut, Search, Smartphone, Trash2, User, X, Newspaper, ScrollText, LockKeyhole } from 'lucide-react';
 import { ModeToggle } from './mode-toggle';
 import { Button } from './ui/button';
-import { listCity, listDistrict } from '@/utilities/constant';
+import { listCity, rangePrice } from '@/utilities/constant';
 import { useUser } from '@/contexts/UserContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { getNoti } from '@/app/api/notification';
+import { changePassword } from '@/app/api/user';
+import Combobox from "./combobox";
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const userInfor = useUser();
+  const router = useRouter();
   const { openModal } = useAuthModal();
-
-  const [listCityRebuild, setListCityRebuild] = useState<any>();
-  const [listDistrictRebuild, setListDistrictRebuild] = useState<any>();
   const [showMenu, setShowMenu] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
   const [showNoti, setShowNoti] = useState(false);
-
   const avatarRef = useRef<HTMLDivElement>(null);
   const avatarTailRef = useRef<HTMLDivElement>(null);
   const notiRef = useRef<HTMLDivElement>(null);
   const notiTailRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [listCityRebuild, setListCityRebuild] = useState<any>()
+  const [city, setCity] = useState<Number>()
+  const [listPriceRebuild, setListPriceRebuild] = useState<any>()
+  const [price, setPrice] = useState<Number>()
+  const [keyword, setKeyword] = useState('');
+  // chane pwd
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordOld, setPasswordOld] = useState('');
+  const [passwordNew, setPasswordNew] = useState('');
+  const [passwordConfirm, setPasswordConfirm] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
-    if(userInfor) {
+    if (userInfor) {
       const fetchNotifications = async () => {
         try {
           const res = await getNoti();
@@ -38,9 +49,19 @@ export default function Header() {
           console.error('Lỗi lấy thông báo:', error);
         }
       };
-  
+
       fetchNotifications();
 
+      const arrayListCityRebuild = listCity.map(item => ({
+        value: item._id,
+        label: item.name
+      }))
+      setListCityRebuild(arrayListCityRebuild)
+      const arrayListPriceRebuild = rangePrice.map(item => ({
+        value: item.id,
+        label: item.value
+      }))
+      setListPriceRebuild(arrayListPriceRebuild)
     }
   }, []);
 
@@ -81,6 +102,61 @@ export default function Header() {
     window.location.href = '/';
   };
 
+  const selectCity = (cityID: Number) => {
+    setCity(cityID)
+  }
+
+  const selectPrice = (price: Number) => {
+    setPrice(price)
+  }
+
+  const handleSearch = () => {
+    const queryParams = new URLSearchParams();
+
+    if (keyword.trim()) queryParams.set('keyword', keyword.trim());
+    if (city) queryParams.set('city', String(city));
+    if (price) queryParams.set('price', String(price));
+
+    router.push(`http://localhost:3000/tim-kiem?${queryParams.toString()}`);
+  };
+
+  const handleChangePassword = async () => {
+    // ✅ Kiểm tra xác nhận mật khẩu
+    if (!passwordOld) {
+      setPasswordError('Vui lòng nhập mật khẩu cũ');
+      return;
+    }
+    if (!passwordNew) {
+      setPasswordError('Vui lòng nhập mật khẩu mới');
+      return;
+    }
+    if (!passwordConfirm) {
+      setPasswordError('Vui lòng nhập lại mật khẩu mới để xác nhận');
+      return;
+    }
+    if (passwordNew !== passwordConfirm) {
+      setPasswordError('Mật khẩu xác nhận không khớp');
+      return;
+    }
+
+    setPasswordError('');
+    try {
+      const res = await changePassword({ passwordOld, passwordNew, passwordConfirm })
+      if (res.success) {
+        alert('✅ Đổi mật khẩu thành công');
+        setShowChangePassword(false);
+        setPasswordOld('');
+        setPasswordNew('');
+        setPasswordConfirm('');
+        setPasswordError('');
+      } else {
+        setPasswordError(res.message || 'Lỗi đổi mật khẩu');
+      }
+    } catch (err: any) {
+      setPasswordError(err.message);
+    }
+  };
+
   return (
     <>
       <header className="flex justify-between px-3 xl:px-16 py-3">
@@ -88,11 +164,11 @@ export default function Header() {
           <Link href='/'>
             <Image src="/images/logo-site.png" alt="logo-site" width={200} height={45} />
           </Link>
-          <div className="flex gap-4">
+          {/* <div className="flex gap-4">
             <Link href='/' className="text-xl text-default-color p-1 hover:border hover:border-default-color">BLOG</Link>
             <Link href='/' className="text-xl text-default-color p-1 hover:border hover:border-default-color">About Us</Link>
             <Link href='/' className="text-xl text-default-color p-1 hover:border hover:border-default-color">Contact</Link>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex gap-2 items-center">
@@ -117,7 +193,7 @@ export default function Header() {
                   <p className="text-default-color cursor-pointer">Đọc tất cả</p>
                   <p className="text-default-color cursor-pointer">Xóa tất cả</p>
                 </div>
-                <div className="flex flex-col gap-3 p-4 group">
+                <div className="flex flex-col gap-3 p-4 group max-h-[600px]">
                   {notifications.length > 0 ? (
                     notifications.map((noti, index) => (
                       <div key={noti._id || index} className="flex gap-3">
@@ -146,7 +222,7 @@ export default function Header() {
           {userInfor ? (
             <div ref={avatarRef} className="md:flex h-9 gap-2 cursor-pointer items-center relative hidden" onClick={() => setShowAvatar(!showAvatar)}>
               {userInfor.avatar ? (
-                <img src={userInfor.avatar} alt="avatar" className="rounded-full w-9 h-9 object-cover" />
+                <img src={`http://localhost:8000${userInfor.avatar}`} alt="avatar" className="rounded-full w-9 h-9 object-cover" />
               ) : (
                 <div className="bg-slate-200 rounded-full w-9 h-9 flex justify-center items-center">
                   <User className="w-5 h-5" />
@@ -157,18 +233,30 @@ export default function Header() {
 
               {showAvatar && (
                 <div ref={avatarTailRef} className="absolute top-14 right-0 w-52 bg-background border border-slate-200 p-3 rounded-xl shadow-lg text-sm z-10" onClick={(e) => e.stopPropagation()}>
-                  <Link href="/tai-khoan" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                  {userInfor.type == 2 &&
+                    <>
+                      <Link href="/cong-ty/dang-tin" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                        <Newspaper className="w-5 h-5" />
+                        <span>Đăng tin</span>
+                      </Link>
+                      <Link href="/cong-ty/danh-sach-tour" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                        <ScrollText className="w-5 h-5" />
+                        <span>Danh sách tour</span>
+                      </Link>
+                    </>
+                  }
+                  <Link href="/tai-khoan/cap-nhat" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
                     <User className="w-5 h-5" />
                     <span>Hồ sơ cá nhân</span>
-                  </Link>
-                  <Link href="/cong-ty/danh-sach-tour" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
-                    <User className="w-5 h-5" />
-                    <span>Danh sách tour</span>
                   </Link>
                   <Link href="/tai-khoan/yeu-thich" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
                     <Heart className="w-5 h-5 text-default-color" />
                     <span>Danh sách yêu thích</span>
                   </Link>
+                  <div className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2" onClick={() => setShowChangePassword(true)}>
+                    <LockKeyhole className="w-5 h-5" />
+                    <span>Đổi mật khẩu</span>
+                  </div>
                   <div className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 cursor-pointer" onClick={handleLogout}>
                     <LogOut className="w-5 h-5" />
                     <span>Đăng xuất</span>
@@ -193,7 +281,7 @@ export default function Header() {
             <Button variant="outline" className="w-full" onClick={() => { openModal(2); setShowMenu(false); }}>Đăng ký</Button>
             <Button className="w-full" onClick={() => { openModal(1); setShowMenu(false); }}>Đăng nhập</Button>
           </div>
-          <div className="mt-6 border-t pt-4">
+          {/* <div className="mt-6 border-t pt-4">
             <Link href="/blog" className="flex items-center gap-4 py-2">
               <BookOpenText />
               <span>Blog</span>
@@ -202,17 +290,68 @@ export default function Header() {
               <Gem />
               <span>Doanh nghiệp tiêu biểu</span>
             </Link>
-          </div>
+          </div> */}
         </div>
       </header>
 
       {/* Banner */}
       <div className="bg-[url('/images/banner.png')] w-full h-96 bg-cover bg-bottom px-5 py-12 xl:py-20 flex flex-col items-center gap-5">
         <div className="relative w-full max-w-xl bg-white rounded-lg">
-          <input type="text" placeholder="Nhập từ khóa tìm kiếm..." className="h-12 w-full rounded-xl pl-4" />
+          <input type="text" placeholder="Nhập từ khóa tìm kiếm..." className="h-12 w-full rounded-xl pl-4" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
           <Search className="absolute top-3 right-3 text-slate-500" />
         </div>
+        <div className="w-full max-w-xl flex flex-col gap-4 lg:gap-0 lg:flex-row">
+          <Combobox listData={listCityRebuild} placeholder={'Điểm xuất phát'} borderRadius={2} handleFunction={selectCity} />
+          <Combobox listData={listPriceRebuild} placeholder={'Mức giá'} borderRadius={1} handleFunction={selectPrice} />
+          <Button className="lg:rounded-l-none h-12 font-semibold" onClick={handleSearch}>
+            Tìm kiếm
+          </Button>
+        </div>
       </div>
+      {showChangePassword && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center layout">
+          <div className="bg-white p-6 rounded-xl w-full max-w-md relative">
+            <X
+              className="absolute top-3 right-3 cursor-pointer"
+              onClick={() => {
+                setShowChangePassword(false);
+                setPasswordOld('');
+                setPasswordNew('');
+                setPasswordConfirm('');
+              }}
+            />
+            <h2 className="text-lg font-bold mb-4">Đổi mật khẩu</h2>
+
+            <input
+              type="password"
+              placeholder="Mật khẩu cũ"
+              className="w-full mb-3 p-2 border rounded"
+              value={passwordOld}
+              onChange={(e) => setPasswordOld(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Mật khẩu mới"
+              className="w-full mb-3 p-2 border rounded"
+              value={passwordNew}
+              onChange={(e) => setPasswordNew(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Xác nhận mật khẩu mới"
+              className="w-full mb-4 p-2 border rounded"
+              value={passwordConfirm}
+              onChange={(e) => setPasswordConfirm(e.target.value)}
+            />
+            {passwordError && (
+              <p className="text-red-600 text-sm mb-2">{passwordError}</p>
+            )}
+            <Button className="w-full" onClick={handleChangePassword}>
+              Cập nhật
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

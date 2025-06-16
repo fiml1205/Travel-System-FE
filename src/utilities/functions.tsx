@@ -2,7 +2,7 @@ import Cookies from 'js-cookie'
 import { jwtDecode } from "jwt-decode";
 import axios, { AxiosRequestConfig, Method } from 'axios';
 
-export const SSToken = Cookies.get('SSToken')
+export const SSToken: any = Cookies.get('SSToken')
 
 export function userInfo() {
     if (SSToken) {
@@ -28,9 +28,9 @@ export function validateEmail(email: string): boolean {
     return emailRegex.test(email)
 }
 
-export function validateNoSqli(input:string): boolean {
+export function validateNoSqli(input: string): boolean {
     const keywords = ['$ne', '$gt', '$lt']
-    for(let keyword of keywords) {
+    for (let keyword of keywords) {
         if (input.includes(keyword)) {
             return false
         }
@@ -46,27 +46,73 @@ export function validatePassword(password: string): boolean | string {
     return "Mật khẩu phải chứa ít nhất một chữ cái, một số và một ký tự đặc biệt";
 }
 
+// export async function callApi(
+//     method: Method,
+//     url: string,
+//     data?: any,
+//     headers?: any
+// ) {
+//     const defaultHeaders: any = {
+//         'Content-Type': 'application/json'
+//     };
+//     if (SSToken) {
+//         defaultHeaders.Authorization = `Bearer ${SSToken}`;
+//     }
+//     const finalHeaders = {
+//         ...defaultHeaders,
+//         ...headers
+//     };
+//     const config: AxiosRequestConfig = {
+//         method: method,
+//         url: `http://localhost:8000/api/${url}`,
+//         data: data,
+//         headers: finalHeaders
+//     };
+
+//     try {
+//         const response = await axios(config);
+//         return response.data;
+//     } catch (error: any) {
+//         if (error.response) {
+//             const message = error.response.data?.message
+//             if (message === 'Invalid token') {
+//                 Cookies.remove('SSToken');
+//                 window.location.href = '/';
+//                 return; 
+//             }
+//             throw new Error(message|| 'API error')
+//         } else {
+//             throw new Error('Lỗi kết nối mạng hoặc server không phản hồi')
+//         }
+//     }
+// }
+
 export async function callApi(
     method: Method,
     url: string,
     data?: any,
     headers?: any
 ) {
-    const defaultHeaders: any = {
-        'Content-Type': 'application/json'
-    };
+    const defaultHeaders: any = {};
+
+    if (!(data instanceof FormData)) {
+        defaultHeaders['Content-Type'] = 'application/json';
+    }
+
     if (SSToken) {
         defaultHeaders.Authorization = `Bearer ${SSToken}`;
     }
+
     const finalHeaders = {
         ...defaultHeaders,
-        ...headers
+        ...headers,
     };
+
     const config: AxiosRequestConfig = {
-        method: method,
+        method,
         url: `http://localhost:8000/api/${url}`,
-        data: data,
-        headers: finalHeaders
+        data,
+        headers: finalHeaders,
     };
 
     try {
@@ -74,9 +120,16 @@ export async function callApi(
         return response.data;
     } catch (error: any) {
         if (error.response) {
-            throw new Error(error.response.data.error || 'API error')
+            const message = error.response.data?.message;
+            if (message === 'Invalid token') {
+                Cookies.remove('SSToken');
+                window.location.href = '/';
+                return;
+            }
+            throw new Error(message || 'API error');
         } else {
-            throw new Error('Lỗi kết nối mạng hoặc server không phản hồi')
+            throw new Error('Lỗi kết nối mạng hoặc server không phản hồi');
         }
     }
 }
+

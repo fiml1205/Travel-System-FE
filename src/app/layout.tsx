@@ -56,6 +56,10 @@ export default async function RootLayout({ children, }: Readonly<{ children: Rea
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css" />
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+      </head>
       <body
         className={`${geistSans.variable} antialiased relative`}
       >
@@ -68,9 +72,9 @@ export default async function RootLayout({ children, }: Readonly<{ children: Rea
           <UserProvider value={infor}>
             <AuthModalProvider>
               <AuthModal /> {/* Hiển thị modal nếu mở */}
-              <div className="fixed bottom-4 right-4 bg-default-color p-3 rounded-full cursor-pointer">
+              {/* <div className="fixed bottom-4 right-4 bg-default-color p-3 rounded-full cursor-pointer">
                 <Image src="/images/chatbot.webp" alt="" width={30} height={30} />
-              </div>
+              </div> */}
               <Header></Header>
               {children}
               <Footer></Footer>

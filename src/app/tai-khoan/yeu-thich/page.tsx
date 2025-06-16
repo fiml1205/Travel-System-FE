@@ -1,53 +1,56 @@
-'use client'
+'use client';
 
 import { useEffect, useState } from 'react';
-import { getListProjectOwn } from '@/app/api/project';
-import Image from "next/image";
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { getListTourSave } from '@/app/api/user';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
-import 'swiper/swiper-bundle.css';
-import Link from "next/link";
-import { Star, MapPinHouse } from "lucide-react"
 import { rangePrice, listCity } from '@/utilities/constant';
-import { useUser } from '@/contexts/UserContext';
+import { Star, MapPinHouse } from "lucide-react"
+import Link from 'next/link';
 
-export default function listTour() {
-    const userInfor = useUser();
-    const [listProject, setListProject] = useState<any>(null)
-    const [isLoading, setIsLoading] = useState(true);
+interface ProjectData {
+    projectId: number;
+    title: string;
+    coverImage: string;
+    price: number;
+}
+
+export default function FavoritePage() {
+    const [projects, setProjects] = useState<ProjectData[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchFavorites = async () => {
+        try {
+            const res = await getListTourSave()
+            if (res.success) {
+                setProjects(res.savedTours);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        if(userInfor && userInfor.type == 2) {
-            const ListProject = async () => {
-                try {
-                    const res = await getListProjectOwn();
-                    setListProject(res?.data.listProject);
-                } catch (error) {
-                    console.error('Lỗi lấy thông báo:', error);
-                } finally {
-                    setIsLoading(false);
-                }
-            };
-    
-            ListProject();
-        } else {
-            window.location.href = '/'
-        }
+        fetchFavorites();
     }, []);
 
     return (
         <div className="relative">
             <div className="w-3/4 p-8 mx-auto mb-5 flex flex-col gap-6 xl:max-w-1200px">
-                <h1 className='text-center font-semibold text-2xl m-3'>Danh sách tour đã tạo</h1>
-                {isLoading ? (
+                <h1 className="text-xl font-bold mb-4">🔍 Kết quả tìm kiếm</h1>
+                {loading ? (
                     <p>Đang tải kết quả...</p>
-                ) : listProject.length === 0 ? (
+                ) : projects.length === 0 ? (
                     <p>Không tìm thấy tour nào phù hợp.</p>
                 ) : (
                     <div className="w-full">
                         <div className='w-full'>
                             <div className="flex flex-col items-center justify-between gap-10 md:flex-row flex-wrap">
-                                {listProject && listProject.map((project: any) => {
+                                {projects && projects.map((project: any) => {
                                     const images: any = [];
                                     // const images = project.scenes.map((scene: any) => scene.originalImage);
                                     const firstScene = project.scenes.find((scene: any) => scene.isFirst) || project.scenes[0];

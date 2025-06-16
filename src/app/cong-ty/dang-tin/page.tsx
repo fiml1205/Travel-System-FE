@@ -8,6 +8,8 @@ import BlockImage360 from '@/components/create-news/BlockImage360';
 import { createTour } from '@/app/api/handle-tour'
 import { rangePrice } from '@/utilities/constant';
 import RichTextEditor from '@/components/RichTextEditor';
+import { listCity } from '@/utilities/constant'
+import Combobox from '@/components/combobox';
 
 interface TourStep {
     day: string;
@@ -25,13 +27,21 @@ export default function NewProjectPage() {
     const [coverImage, setCoverImage] = useState<File | null>(null);
     const [sale, setSale] = useState<string | null>(null);
     const [scenes, setScenes] = useState<any[]>([]);
+    const [listCityRebuild, setListCityRebuild] = useState<any>()
+    const [departureCity, setDepartureCity] = useState<number | null>(null);
 
     useEffect(() => {
-        if (!userInfor) {
+        if (!userInfor || userInfor.type == 1) {
             window.location.href = '/'
         }
         const getTime = Date.now();
         setProjectId(getTime)
+
+        const arrayListCityRebuild = listCity.map(item => ({
+            value: item._id,
+            label: item.name
+        }))
+        setListCityRebuild(arrayListCityRebuild)
     }, [])
 
     const addStep = () => {
@@ -69,7 +79,7 @@ export default function NewProjectPage() {
 
             coverImageUrl = result.url;
         }
-        if(!title || !description || !coverImage || !departureDate || !price ){
+        if (!title || !description || !coverImage || !departureDate || !price || !selectedCity) {
             alert('Bạn cần điền đầy đủ thông tin có dấu *')
             return
         }
@@ -78,6 +88,7 @@ export default function NewProjectPage() {
             userId: userInfor.userId,
             title,
             description,
+            departureCity: selectedCity,
             coverImage: coverImageUrl,
             departureDate,
             price,
@@ -85,16 +96,20 @@ export default function NewProjectPage() {
             tourSteps,
             scenes,
         };
-        // console.log(data)
-        // return
         try {
             await createTour(data);
             alert('✅ Tour đã được đăng!');
+            window.location.href = 'http://localhost:3000/cong-ty/danh-sach-tour'
         } catch (error: any) {
             alert(error.message)
         }
 
     };
+    const [selectedCity, setSelectedCity] = useState<any>(null);
+
+    const selectCity = (cityID: Number) => {
+        setSelectedCity(cityID)
+    }
 
     return (
         <div className="mx-auto space-y-6 flex flex-col w-80vw">
@@ -127,8 +142,13 @@ export default function NewProjectPage() {
                 </div>
 
                 <div className="flex gap-6">
+                    {/* Thành phố */}
                     <div>
-                        <span className='font-semibold'>Khởi hành: <span className='text-red-600'>*</span></span>
+                        <span className="font-semibold">Điểm khởi hành: <span className='text-red-600'>*</span></span>
+                        <Combobox listData={listCityRebuild} placeholder={'tỉnh thành'} borderRadius={2} handleFunction={selectCity} />
+                    </div>
+                    <div>
+                        <span className='font-semibold'>Ngày khởi hành: <span className='text-red-600'>*</span></span>
                         <input className='border-solid border rounded-xs p-1.5 ml-1.5' placeholder="Ngày khởi hành" value={departureDate} onChange={(e) => setDepartureDate(e.target.value)} />
                     </div>
                     <div>
@@ -183,7 +203,7 @@ export default function NewProjectPage() {
                 <BlockImage360 projectId={projectId} onScenesChange={setScenes} />
             </div>
 
-            <Button onClick={handleSubmit} className="w-full mt-6 bg-green-600 hover:bg-green-700">Đăng tour</Button>
+            <Button onClick={handleSubmit} className="w-full mt-6 mb-6">Đăng tour</Button>
         </div>
     );
 }

@@ -51,7 +51,7 @@ export default function Combobox({ listData, placeholder, borderRadius, handleFu
                 >
                     {value
                         ? listData.find((item: any) => item.value === value)?.label
-                        : `Tìm ${placeholder} `}
+                        : `${placeholder} `}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full lg:w-[200px] p-0">
@@ -60,9 +60,9 @@ export default function Combobox({ listData, placeholder, borderRadius, handleFu
                     <CommandList>
                         <CommandEmpty>Không có dữ liệu</CommandEmpty>
                         <CommandGroup>
-                            {listData?.map((item: any) => (
+                            {listData?.map((item: any, index: any) => (
                                 <CommandItem
-                                    key={item.value}
+                                    key={`${item.value}-${index}`}
                                     value={item.value}
                                     onSelect={() => {
                                         setValue(item.value)

@@ -11,9 +11,9 @@ export default function Footer() {
                     <div className="flex flex-col gap-4 md:flex-row md:gap-12 lg:gap-7 xl:gap-28">
                         <div className="flex flex-col gap-2 ml-1">
                             <span className="font-semibold">Công ty cổ phần chuyển đổi số SnowMoon</span>
-                            <span className="text-13px">Tổng đài chăm sóc: 1900 1310</span>
+                            <span className="text-13px">Tổng đài chăm sóc: 0968221320</span>
                             <span className="text-13px">Email: hotro@snowmoon.vn</span>
-                            <span className="text-13px">Văn phòng Hà Nội: Tầng 11, Tòa Peakview, 36 Hoàng Cầu, Đống Đa</span>
+                            {/* <span className="text-13px">Văn phòng Hà Nội: Tầng 11, Tòa Peakview, 36 Hoàng Cầu, Đống Đa</span> */}
                             <div className="flex gap-1 mt-2">
                                 <Image src='/images/bo-cong-thuong.webp' alt="bo-cong-thuong" width={160} height={60} className="mr-2"/>
                                 <Image src='/images/bo-cong-thuong2.webp' alt="bo-cong-thuong" width={160} height={60} />
@@ -29,23 +29,23 @@ export default function Footer() {
                         </div>
                     </div>
                     <div className="flex flex-col md:flex-row lg:flex-col gap-6 lg:items-center lg:justify-center">
-                        <div className="flex gap-4 items-center">
+                        {/* <div className="flex gap-4 items-center">
                             <span className="font-semibold">Tải app VR360</span>
                             <Image src="/images/qr_download_app.webp" alt="qr_download_app" width={100} height={100} className="hidden xl:block" />
                             <Button className="xl:hidden gap-2">
                                 <Download />
                                 <span>mysport</span>
                             </Button>
-                        </div>
+                        </div> */}
                         <div className="flex gap-7 items-center">
                             <span className="font-semibold">Kết nối với VR360</span>
                             <div className="flex gap-4">
                                 <Link href="/" className="bg-default-color rounded-full p-2">
                                     <Facebook className="text-slate-50 w-6 h-6" />
                                 </Link>
-                                <Link href="/" className="bg-default-color rounded-full p-2">
+                                {/* <Link href="/" className="bg-default-color rounded-full p-2">
                                     <Twitter className="text-slate-50 w-6 h-6" />
-                                </Link>
+                                </Link> */}
                                 <Link href="/" className="bg-default-color rounded-full p-2">
                                     <Youtube className="text-slate-50 w-6 h-6" />
                                 </Link>

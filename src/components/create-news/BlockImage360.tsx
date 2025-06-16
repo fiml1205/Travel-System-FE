@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useThree, useLoader } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
+import { Button } from '@/components/ui/button';
+
 
 interface Hotspot {
   position: [number, number, number];
+  yaw: number; // degrees
+  pitch: number; // degrees
   label: string;
   targetSceneId: string;
 }
@@ -15,7 +19,7 @@ interface Scene {
   id: string;
   name?: string;
   original: string;
-  cubePaths: string[];
+  originalImage: string;
   hotspots: Hotspot[];
   audio?: string;
   isFirst?: boolean;
@@ -27,52 +31,13 @@ interface BlockImage360Props {
   initialScenes?: Scene[];
 }
 
-function ClickHandler({ onAdd, enabled }: { onAdd: (pos: [number, number, number]) => void; enabled: boolean }) {
-  const { camera, gl, scene } = useThree();
-
-  useEffect(() => {
-    if (!enabled) return;
-
-    const handleClick = (event: MouseEvent) => {
-      const rect = gl.domElement.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
-
-      const intersects = raycaster.intersectObject(scene, true);
-      if (intersects.length > 0) {
-        const point = intersects[0].point;
-        console.log('📍 Vị trí hotspot:', point);
-        onAdd([point.x, point.y, point.z]);
-      }
-    };
-
-    gl.domElement.addEventListener('click', handleClick);
-    return () => {
-      gl.domElement.removeEventListener('click', handleClick);
-    };
-  }, [enabled, camera, gl, scene]);
-
-  return null;
-}
-
-function HotspotMarker({ position, label }: { position: [number, number, number]; label: string }) {
+function SphereScene({ textureURL }: { textureURL: string }) {
+  const texture = useLoader(THREE.TextureLoader, textureURL);
   return (
-    <group position={position}>
-      <mesh>
-        <sphereGeometry args={[0.4, 32, 32]} />
-        <meshBasicMaterial color="red" />
-      </mesh>
-      {label && (
-        <Html position={[0, -0.6, 0]} center distanceFactor={1.5} zIndexRange={[10, 0]}>
-          <div className="bg-black bg-opacity-70 text-white px-4 py-1 rounded text-8xl font-semibold whitespace-nowrap">
-            {label}
-          </div>
-        </Html>
-      )}
-    </group>
+    <mesh scale={[-1, 1, 1]}>
+      <sphereGeometry args={[10, 60, 40]} />
+      <meshBasicMaterial map={texture} side={THREE.BackSide} />
+    </mesh>
   );
 }
 
@@ -83,6 +48,7 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
   const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(false);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
+  const API_BASE_URL = 'http://localhost:8000';
 
   useEffect(() => {
     if (initialScenes && initialScenes.length > 0) {
@@ -99,34 +65,103 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setLoading(true);
+
     const formData = new FormData();
     formData.append('image', file);
     formData.append('projectId', projectId);
 
-    setLoading(true);
-    const res = await fetch('/api/demo-image360', {
-      method: 'POST',
-      body: formData,
-    });
-    setLoading(false);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/image/sliceImage360`, {
+        method: 'POST',
+        body: formData,
+      });
 
-    if (res.ok) {
       const data = await res.json();
+      const sceneId = data.data.sceneId;
+
+      // ✅ Backend xử lý xong mới render ảnh local
+      const blobURL = URL.createObjectURL(file);
+
       const newScene: Scene = {
-        id: data.sceneId,
-        original: data.original,
-        cubePaths: data.paths,
+        id: sceneId,
+        original: blobURL,
+        originalImage: `${API_BASE_URL}/tiles/${projectId}/${sceneId}/originalImage.jpg`,
         hotspots: [],
       };
+
       setScenes((prev) => [...prev, newScene]);
       setCurrentSceneIndex(scenes.length);
+    } catch (err) {
+      console.error('❌ Upload failed:', err);
+    } finally {
+      setLoading(false);
     }
   };
+
+
+  function ClickHandler({ onAdd, enabled }: { onAdd: (pos: [number, number, number]) => void; enabled: boolean }) {
+    const { camera, gl, scene } = useThree();
+
+    useEffect(() => {
+      if (!enabled) return;
+
+      const handleClick = (event: MouseEvent) => {
+        const rect = gl.domElement.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
+
+        const intersects = raycaster.intersectObject(scene, true);
+        if (intersects.length > 0) {
+          const point = intersects[0].point;
+          console.log('📍 Vị trí hotspot:', point);
+          onAdd([point.x, point.y, point.z]);
+        }
+      };
+
+      gl.domElement.addEventListener('click', handleClick);
+      return () => {
+        gl.domElement.removeEventListener('click', handleClick);
+      };
+    }, [enabled, camera, gl, scene]);
+
+    return null;
+  }
+
+  function HotspotMarker({ position, label }: { position: [number, number, number]; label: string }) {
+    return (
+      <group position={position}>
+        <mesh>
+          <sphereGeometry args={[0.4, 32, 32]} />
+          <meshBasicMaterial color="red" />
+        </mesh>
+        {label && (
+          <Html position={[0, -0.6, 0]} center distanceFactor={1.5} zIndexRange={[10, 0]}>
+            <div className="bg-black bg-opacity-70 text-white px-4 py-1 rounded text-8xl font-semibold whitespace-nowrap">
+              {label}
+            </div>
+          </Html>
+        )}
+      </group>
+    );
+  }
+
+
 
   const handleAddHotspot = (pos: [number, number, number]) => {
     if (currentSceneIndex === null) return;
     const updatedScenes = [...scenes];
-    updatedScenes[currentSceneIndex].hotspots.push({ position: pos, label: '', targetSceneId: '' });
+    const { yaw, pitch } = vectorToYawPitchDegrees(pos);
+    updatedScenes[currentSceneIndex].hotspots.push({
+      position: pos,
+      yaw,
+      pitch,
+      label: '',
+      targetSceneId: '',
+    });
     setScenes(updatedScenes);
     setAdding(false);
   };
@@ -138,8 +173,36 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
     setScenes(updatedScenes);
   };
 
+  function vectorToYawPitchDegrees([x, y, z]: [number, number, number]) {
+    const length = Math.sqrt(x * x + y * y + z * z);
+    const normX = x / length;
+    const normY = y / length;
+    const normZ = z / length;
+
+    const yaw = Math.atan2(normX, normZ);        // radians
+    const pitch = Math.asin(normY);              // radians
+
+    const toDegrees = (rad: number) => rad * (180 / Math.PI);
+
+    return {
+      yaw: toDegrees(yaw),
+      pitch: toDegrees(pitch)
+    };
+  }
+
   const deleteScene = async (index: number) => {
     const sceneToDelete = scenes[index];
+    const formData = new FormData();
+    formData.append('projectId', projectId);
+    formData.append('sceneId', sceneToDelete.id);
+    try {
+      await fetch(`${API_BASE_URL}/api/image/deleteImage`, {
+        method: 'POST',
+        body: formData,
+      });
+    } catch (err) {
+      console.warn('❌ Không thể xoá folder ảnh:', err);
+    }
 
     try {
       await fetch('/api/delete-scene', {
@@ -207,11 +270,10 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
                       deleteScene(idx);
                     }
                   }}
-                  className="absolute top-0 right-0 bg-red-600 text-white rounded px-1"
+                  className="absolute top-0 right-0 bg-red-600 text-white rounded px-1 opacity-80"
                 >
                   ✕
                 </button>
-
               </div>
               <div className='flex flex-col'>
 
@@ -249,28 +311,18 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
           <Canvas camera={{ fov: 60, position: [0, 0, 3] }}>
             <ambientLight />
             <OrbitControls enablePan={false} enableZoom={false} enableRotate={true} makeDefault />
-            <mesh scale={[-1, 1, 1]}>
-              <boxGeometry args={[10, 10, 10]} />
-              {currentScene.cubePaths.map((path, i) => (
-                <meshBasicMaterial
-                  key={i}
-                  attach={`material-${i}`}
-                  map={new THREE.TextureLoader().load(path)}
-                  side={THREE.BackSide}
-                />
-              ))}
-            </mesh>
+            <SphereScene textureURL={currentScene.original} />
             {currentScene.hotspots.map((hs, idx) => (
               <HotspotMarker key={idx} position={hs.position} label={hs.label} />
             ))}
             <ClickHandler onAdd={handleAddHotspot} enabled={adding} />
           </Canvas>
-          <button
+          <Button
             onClick={() => setAdding(true)}
-            className="absolute bottom-2 left-2 px-3 py-1 bg-blue-600 text-white rounded"
+            className="absolute bottom-2 left-2 px-3 py-1 "
           >
             {adding ? 'Chọn điểm...' : '➕ Thêm Hotspot'}
-          </button>
+          </Button>
         </div>
       )}
 
