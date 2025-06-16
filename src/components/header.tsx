@@ -121,7 +121,6 @@ export default function Header() {
   };
 
   const handleChangePassword = async () => {
-    // ✅ Kiểm tra xác nhận mật khẩu
     if (!passwordOld) {
       setPasswordError('Vui lòng nhập mật khẩu cũ');
       return;
@@ -159,21 +158,15 @@ export default function Header() {
 
   return (
     <>
+      {/* header */}
       <header className="flex justify-between px-3 xl:px-16 py-3">
         <div className="flex items-center gap-5">
           <Link href='/'>
             <Image src="/images/logo-site.png" alt="logo-site" width={200} height={45} />
           </Link>
-          {/* <div className="flex gap-4">
-            <Link href='/' className="text-xl text-default-color p-1 hover:border hover:border-default-color">BLOG</Link>
-            <Link href='/' className="text-xl text-default-color p-1 hover:border hover:border-default-color">About Us</Link>
-            <Link href='/' className="text-xl text-default-color p-1 hover:border hover:border-default-color">Contact</Link>
-          </div> */}
         </div>
-
         <div className="flex gap-2 items-center">
           <ModeToggle />
-
           {/* Notification */}
           <div
             ref={notiRef}
@@ -182,7 +175,6 @@ export default function Header() {
           >
             <Bell className="w-5 h-5 select-none" />
             <span className="absolute -top-2 -right-1 w-5 h-5 rounded-full bg-default-color text-white text-xs flex justify-center items-center">{notifications.length}</span>
-
             {showNoti && (
               <div
                 ref={notiTailRef}
@@ -217,7 +209,6 @@ export default function Header() {
               </div>
             )}
           </div>
-
           {/* User area */}
           {userInfor ? (
             <div ref={avatarRef} className="md:flex h-9 gap-2 cursor-pointer items-center relative hidden" onClick={() => setShowAvatar(!showAvatar)}>
@@ -230,7 +221,6 @@ export default function Header() {
               )}
               <span className="font-semibold">{userInfor.userName}</span>
               <ChevronDown className="w-4 h-4" />
-
               {showAvatar && (
                 <div ref={avatarTailRef} className="absolute top-14 right-0 w-52 bg-background border border-slate-200 p-3 rounded-xl shadow-lg text-sm z-10" onClick={(e) => e.stopPropagation()}>
                   {userInfor.type == 2 &&
@@ -270,10 +260,8 @@ export default function Header() {
               <Button className="font-semibold h-10 text-base w-28 bg-white text-default-color border border-default-color" onClick={() => openModal(2)}>Đăng ký</Button>
             </div>
           )}
-
           <AlignJustify className="w-5 h-5 cursor-pointer xl:hidden" onClick={() => setShowMenu(!showMenu)} />
         </div>
-
         {/* Slide Menu Mobile */}
         <div className={`absolute top-0 left-0 w-full h-full z-20 bg-white p-4 transition-transform duration-700 ${showMenu ? 'translate-x-0' : '-translate-x-full'}`}>
           <X className="absolute top-3 right-3" onClick={() => setShowMenu(false)} />
@@ -281,33 +269,25 @@ export default function Header() {
             <Button variant="outline" className="w-full" onClick={() => { openModal(2); setShowMenu(false); }}>Đăng ký</Button>
             <Button className="w-full" onClick={() => { openModal(1); setShowMenu(false); }}>Đăng nhập</Button>
           </div>
-          {/* <div className="mt-6 border-t pt-4">
-            <Link href="/blog" className="flex items-center gap-4 py-2">
-              <BookOpenText />
-              <span>Blog</span>
-            </Link>
-            <Link href="/diamond-companies" className="flex items-center gap-4 py-2">
-              <Gem />
-              <span>Doanh nghiệp tiêu biểu</span>
-            </Link>
-          </div> */}
         </div>
       </header>
-
       {/* Banner */}
-      <div className="bg-[url('/images/banner.png')] w-full h-96 bg-cover bg-bottom px-5 py-12 xl:py-20 flex flex-col items-center gap-5">
-        <div className="relative w-full max-w-xl bg-white rounded-lg">
-          <input type="text" placeholder="Nhập từ khóa tìm kiếm..." className="h-12 w-full rounded-xl pl-4" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
-          <Search className="absolute top-3 right-3 text-slate-500" />
+      {!(userInfor && userInfor.type == 0) &&
+        <div className="bg-[url('/images/banner.png')] w-full h-96 bg-cover bg-bottom px-5 py-12 xl:py-20 flex flex-col items-center gap-5">
+          <div className="relative w-full max-w-xl bg-white rounded-lg">
+            <input type="text" placeholder="Nhập từ khóa tìm kiếm..." className="h-12 w-full rounded-xl pl-4" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
+            <Search className="absolute top-3 right-3 text-slate-500" />
+          </div>
+          <div className="w-full max-w-xl flex flex-col gap-4 lg:gap-0 lg:flex-row">
+            <Combobox listData={listCityRebuild} placeholder={'Điểm xuất phát'} borderRadius={2} handleFunction={selectCity} />
+            <Combobox listData={listPriceRebuild} placeholder={'Mức giá'} borderRadius={1} handleFunction={selectPrice} />
+            <Button className="lg:rounded-l-none h-12 font-semibold" onClick={handleSearch}>
+              Tìm kiếm
+            </Button>
+          </div>
         </div>
-        <div className="w-full max-w-xl flex flex-col gap-4 lg:gap-0 lg:flex-row">
-          <Combobox listData={listCityRebuild} placeholder={'Điểm xuất phát'} borderRadius={2} handleFunction={selectCity} />
-          <Combobox listData={listPriceRebuild} placeholder={'Mức giá'} borderRadius={1} handleFunction={selectPrice} />
-          <Button className="lg:rounded-l-none h-12 font-semibold" onClick={handleSearch}>
-            Tìm kiếm
-          </Button>
-        </div>
-      </div>
+      }
+      {/* block change pwd */}
       {showChangePassword && (
         <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center layout">
           <div className="bg-white p-6 rounded-xl w-full max-w-md relative">
@@ -321,7 +301,6 @@ export default function Header() {
               }}
             />
             <h2 className="text-lg font-bold mb-4">Đổi mật khẩu</h2>
-
             <input
               type="password"
               placeholder="Mật khẩu cũ"

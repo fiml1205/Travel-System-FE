@@ -54,15 +54,15 @@ export default function VoteStats({ vote, projectId, projectOwnerId }: VoteStats
 
   return (
     <div className="w-full border rounded-md mt-6 p-4 bg-gray-50">
-      <div className="flex gap-8 select-none">
+      <div className="flex gap-8 select-none items-center">
         {/* Cột trái */}
         <div className="text-center w-1/3">
-          <p className="text-2xl font-bold">{vote.averageRating.toFixed(1)}/5</p>
+          <p className="text-3xl font-bold">{vote.averageRating.toFixed(1)}/5</p>
           <div className="flex justify-center mb-1">
             {Array.from({ length: 5 }).map((_, i) => (
               <svg
                 key={i}
-                className={`w-5 h-5 ${i < Math.round(vote.averageRating) ? "text-yellow-400" : "text-gray-300"}`}
+                className={`w-6 h-6 ${i < Math.round(vote.averageRating) ? "text-yellow-400" : "text-gray-300"}`}
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >

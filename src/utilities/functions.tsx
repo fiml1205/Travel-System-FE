@@ -46,47 +46,6 @@ export function validatePassword(password: string): boolean | string {
     return "Mật khẩu phải chứa ít nhất một chữ cái, một số và một ký tự đặc biệt";
 }
 
-// export async function callApi(
-//     method: Method,
-//     url: string,
-//     data?: any,
-//     headers?: any
-// ) {
-//     const defaultHeaders: any = {
-//         'Content-Type': 'application/json'
-//     };
-//     if (SSToken) {
-//         defaultHeaders.Authorization = `Bearer ${SSToken}`;
-//     }
-//     const finalHeaders = {
-//         ...defaultHeaders,
-//         ...headers
-//     };
-//     const config: AxiosRequestConfig = {
-//         method: method,
-//         url: `http://localhost:8000/api/${url}`,
-//         data: data,
-//         headers: finalHeaders
-//     };
-
-//     try {
-//         const response = await axios(config);
-//         return response.data;
-//     } catch (error: any) {
-//         if (error.response) {
-//             const message = error.response.data?.message
-//             if (message === 'Invalid token') {
-//                 Cookies.remove('SSToken');
-//                 window.location.href = '/';
-//                 return; 
-//             }
-//             throw new Error(message|| 'API error')
-//         } else {
-//             throw new Error('Lỗi kết nối mạng hoặc server không phản hồi')
-//         }
-//     }
-// }
-
 export async function callApi(
     method: Method,
     url: string,

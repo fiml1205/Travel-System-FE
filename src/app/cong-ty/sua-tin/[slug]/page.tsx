@@ -5,21 +5,37 @@ import { useParams } from 'next/navigation';
 import BlockImage360 from '@/components/create-news/BlockImage360';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/contexts/UserContext';
-import { editTour } from '@/app/api/handle-tour'
+import { editTour } from '@/app/api/handle-tour';
+import { Trash } from 'lucide-react';
+import RichTextEditor from '@/components/RichTextEditor';
+import { listCity, rangePrice } from '@/utilities/constant';
+import Combobox from '@/components/combobox';
+
+interface TourStep {
+  day: string;
+  content: string;
+}
 
 export default function EditTourPage() {
   const params = useParams();
   const projectId: any = params?.slug;
+  const userInfor = useUser();
+
   const [loading, setLoading] = useState(true);
-  const [scenes, setScenes] = useState([]);
+  const [scenes, setScenes] = useState<any[]>([]);
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [selectedCity, setSelectedCity] = useState<any>(null);
+  const [listCityRebuild, setListCityRebuild] = useState<any[]>([]);
+
   const [tour, setTour] = useState({
     title: '',
     description: '',
     departureDate: '',
     price: 0,
-    tourSteps: [],
+    sale: '',
+    departureCity: null,
+    tourSteps: [] as TourStep[],
   });
-  const userInfor = useUser()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,85 +47,136 @@ export default function EditTourPage() {
         description: data.description,
         departureDate: data.departureDate,
         price: data.price,
+        sale: data.sale,
+        departureCity: data.departureCity,
         tourSteps: data.tourSteps || [],
       });
 
       setScenes(data.scenes || []);
+      setSelectedCity(data.departureCity);
       setLoading(false);
     };
+
+    const arrayListCityRebuild = listCity.map(item => ({
+      value: item._id,
+      label: item.name,
+    }));
+    setListCityRebuild(arrayListCityRebuild);
 
     fetchData();
   }, [projectId]);
 
+  const updateStep = (i: number, field: keyof TourStep, value: string) => {
+    const updated = [...tour.tourSteps];
+    updated[i][field] = value;
+    setTour(t => ({ ...t, tourSteps: updated }));
+  };
+
+  const removeStep = (i: number) => {
+    setTour(t => ({
+      ...t,
+      tourSteps: t.tourSteps.filter((_, idx) => idx !== i),
+    }));
+  };
+
+  const addStep = () => {
+    setTour(t => ({
+      ...t,
+      tourSteps: [...t.tourSteps, { day: '', content: '' }],
+    }));
+  };
+
   const handleUpdate = async () => {
     const body = {
       ...tour,
+      departureCity: selectedCity,
       scenes,
     };
 
     await editTour(body, projectId);
 
     alert('✅ Cập nhật tour thành công');
-    window.location.href = 'http://localhost:3000/cong-ty/danh-sach-tour'
+    window.location.href = 'http://localhost:3000/cong-ty/danh-sach-tour';
   };
 
   if (loading) return <div className="p-6">Đang tải dữ liệu...</div>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Chỉnh sửa Tour</h1>
+    <div className="mx-auto space-y-6 flex flex-col w-80vw">
+      <h1 className="text-2xl font-bold mt-6 text-center">📝 Chỉnh sửa tour du lịch</h1>
+      <div className='w-full space-y-6 flex flex-col'>
+        <div>
+          <p className='mb-2.5 font-semibold'>Tiêu đề tour <span className='text-red-600'>*</span></p>
+          <input className='border-solid border rounded-xs p-1.5 w-full' placeholder="Tiêu đề tour" value={tour.title} onChange={(e) => setTour(t => ({ ...t, title: e.target.value }))} />
+        </div>
+        <div>
+          <p className='mb-2.5 font-semibold'>Giới thiệu chung <span className='text-red-600'>*</span></p>
+          <textarea className="mt-2 p-1.5 border-solid border rounded-xs w-full" placeholder="Giới thiệu chung" value={tour.description} onChange={(e) => setTour(t => ({ ...t, description: e.target.value }))} />
+        </div>
 
-      <div className="grid grid-cols-2 gap-4">
+        <div className="flex gap-6">
+          <div>
+            <span className="font-semibold">Điểm khởi hành: <span className='text-red-600'>*</span></span>
+            <Combobox listData={listCityRebuild} placeholder={'tỉnh thành'} borderRadius={2} handleFunction={setSelectedCity} />
+          </div>
+          <div>
+            <span className='font-semibold'>Ngày khởi hành: <span className='text-red-600'>*</span></span>
+            <input className='border-solid border rounded-xs p-1.5 ml-1.5' placeholder="Ngày khởi hành" value={tour.departureDate} onChange={(e) => setTour(t => ({ ...t, departureDate: e.target.value }))} />
+          </div>
+          <div>
+            <span className='font-semibold'>Giá: <span className='text-red-600'>*</span></span>
+            <select
+              className="border-solid border rounded-xs p-1.5 ml-1.5"
+              value={tour.price ?? ''}
+              onChange={(e) => setTour(t => ({ ...t, price: Number(e.target.value) }))}
+            >
+              <option value="">Chọn mức giá</option>
+              {rangePrice.map(option => (
+                <option key={option.id} value={option.id}>{option.value}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         <div>
-          <p className='select-none mb-2 '>Tên tour</p>
+          <span className='font-semibold'>Ưu đãi:</span>
           <input
-            value={tour.title}
-            onChange={(e) => setTour((t) => ({ ...t, title: e.target.value }))}
-            placeholder="Tên tour"
-            className='w-full min-h-11 p-3'
+            className='border-solid border rounded-xs p-1.5 ml-1.5 min-w-[500]'
+            placeholder="Nhập thông tin ưu đãi"
+            value={tour.sale ?? ''}
+            onChange={(e) => setTour(t => ({ ...t, sale: e.target.value }))}
           />
         </div>
+
         <div>
-          <p className='select-none mb-2 '>Ngày khởi hành</p>
-          <input
-            value={tour.departureDate}
-            onChange={(e) => setTour((t) => ({ ...t, departureDate: e.target.value }))}
-            placeholder="Ngày khởi hành"
-            className='w-full min-h-11 p-3'
-          />
-        </div>
-        <div>
-          <p className='select-none mb-2 '>Giá vé</p>
-          <input
-            type="number"
-            value={tour.price}
-            onChange={(e) => setTour((t) => ({ ...t, price: +e.target.value }))}
-            placeholder="Giá vé"
-            className='w-full min-h-11 p-3'
-          />
-        </div>
-        <div>
-          <p className='select-none mb-2 '>Mô tả</p>
-          <textarea
-            value={tour.description}
-            onChange={(e) => setTour((t) => ({ ...t, description: e.target.value }))}
-            placeholder="Mô tả"
-            className='w-full min-h-11 p-3'
-          />
+          <h2 className="text-lg font-semibold">🧭 Lịch trình tour</h2>
+          {tour.tourSteps.map((step, i) => (
+            <div key={i} className="border p-3 rounded mt-2">
+              <div className="flex justify-between items-center">
+                <input className='border-solid border rounded-xs p-1.5'
+                  placeholder={`Ngày ${i + 1}`}
+                  value={step.day}
+                  onChange={(e) => updateStep(i, 'day', e.target.value)}
+                />
+                <Trash className="text-red-500 cursor-pointer" onClick={() => removeStep(i)} />
+              </div>
+              <RichTextEditor
+                value={step.content}
+                onChange={(val) => updateStep(i, 'content', val)}
+                projectId={projectId}
+              />
+            </div>
+          ))}
+          {/* <Button onClick={addStep} className="mt-3" variant="secondary">+ Thêm ngày</Button> */}
         </div>
       </div>
 
-      <div className="mt-6">
-        <BlockImage360
-          projectId={projectId}
-          onScenesChange={setScenes}
-          initialScenes={scenes}
-        />
+      <div>
+        <h2 className="text-lg font-semibold">🌐 Quản lý ảnh 360°</h2>
+        {/* <BlockImage360 projectId={projectId} onScenesChange={setScenes} initialScenes={scenes} /> */}
       </div>
 
-      <div className="mt-6 text-right">
-        <Button onClick={handleUpdate}>💾 Cập nhật tour</Button>
-      </div>
+      <Button onClick={handleUpdate} className="w-full mt-6 mb-6">💾 Cập nhật tour</Button>
     </div>
   );
 }

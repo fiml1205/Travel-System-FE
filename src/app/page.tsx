@@ -42,7 +42,7 @@ export default function Home() {
                   // const images = project.scenes.map((scene: any) => scene.originalImage);
                   const firstScene = project.scenes.find((scene: any) => scene.isFirst) || project.scenes[0];
                   return (
-                    <div key={project._id} className="flex flex-col gap-2 rounded-lg overflow-hidden shadow-lg w-full max-w-[400px] shadow-color-dark h-[360]">
+                    <div key={project._id} className="flex flex-col gap-2 rounded-lg overflow-hidden shadow-lg w-full max-w-[300px] shadow-color-dark h-[360]">
                       <div>
                         <Swiper
                           modules={[Navigation, Pagination]}

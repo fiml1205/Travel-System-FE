@@ -41,7 +41,7 @@ export default function FavoritePage() {
     return (
         <div className="relative">
             <div className="w-3/4 p-8 mx-auto mb-5 flex flex-col gap-6 xl:max-w-1200px">
-                <h1 className="text-xl font-bold mb-4">🔍 Kết quả tìm kiếm</h1>
+                <h1 className="text-xl font-bold mb-4">Danh sách tour yêu thích</h1>
                 {loading ? (
                     <p>Đang tải kết quả...</p>
                 ) : projects.length === 0 ? (

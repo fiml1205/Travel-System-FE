@@ -173,10 +173,9 @@
 }
 
 .tiptap img {
-  max-width: 800px;
-  max-height: 450px;
-  width: auto;
+  max-width: 100%;
   height: auto;
+  max-height: 450px;
   display: block;
   margin: 0 auto;
 }
@@ -235,8 +234,3 @@
   color: white;
   white-space: nowrap;
 }
-/* 
-.pnlm-hotspot {
-  width: 50px !important;
-  height: 50px !important;
-} */

@@ -22,14 +22,26 @@ export default function UserManagementPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [search, setSearch] = useState('');
+  const [searchParams, setSearchParams] = useState({
+    userId: '',
+    account: '',
+    userName: '',
+    email: '',
+    phone: '',
+    userType: ''
+  });
 
   const fetchUsers = async () => {
-    const res = await fetch(`http://localhost:8000/api/admin/listUsers?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`, {
+    const query = new URLSearchParams();
+    query.set('page', page.toString());
+    query.set('limit', limit.toString());
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value) query.set(key, value);
+    });
+    const res = await fetch(`http://localhost:8000/api/admin/users?${query.toString()}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
-    console.log(data)
     setUsers(data.users);
     setTotal(data.totalCount);
   };
@@ -50,7 +62,7 @@ export default function UserManagementPage() {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      fetchUsers(); // Refresh lại danh sách
+      fetchUsers();
     } catch (err) {
       console.error('Lỗi xoá:', err);
       alert('Lỗi khi xoá user');
@@ -59,17 +71,44 @@ export default function UserManagementPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold mb-4">Quản lý người dùng <span className="text-blue-600">({total})</span></h1>
-      <div className="mb-4 flex items-center gap-2">
-        <input
-          type="text"
-          placeholder="Tìm kiếm theo tên, email, SĐT, địa chỉ..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="border px-3 py-2 rounded w-full max-w-md"
+      <h1 className="text-xl font-bold mb-4">Quản lý người dùng / Tổng số: <span className="text-blue-600">({total})</span> user</h1>
+      <div className="mb-4 flex items-center gap-2 flex-wrap">
+        <input placeholder="User ID"
+          className="border px-3 py-2 rounded"
+          value={searchParams.userId}
+          onChange={(e) => setSearchParams(prev => ({ ...prev, userId: e.target.value }))}
         />
+        <input placeholder="Tài khoản"
+          className="border px-3 py-2 rounded"
+          value={searchParams.account}
+          onChange={(e) => setSearchParams(prev => ({ ...prev, account: e.target.value }))}
+        />
+        <input placeholder="Tên người dùng"
+          className="border px-3 py-2 rounded"
+          value={searchParams.userName}
+          onChange={(e) => setSearchParams(prev => ({ ...prev, userName: e.target.value }))}
+        />
+        <input placeholder="Email"
+          className="border px-3 py-2 rounded"
+          value={searchParams.email}
+          onChange={(e) => setSearchParams(prev => ({ ...prev, email: e.target.value }))}
+        />
+        <input placeholder="Số điện thoại"
+          className="border px-3 py-2 rounded"
+          value={searchParams.phone}
+          onChange={(e) => setSearchParams(prev => ({ ...prev, phone: e.target.value }))}
+        />
+        <select
+          className="border px-3 py-2 rounded"
+          value={searchParams.userType}
+          onChange={(e) => setSearchParams(prev => ({ ...prev, userType: e.target.value }))}
+        >
+          <option value="">Loại người dùng</option>
+          <option value="1">Khách</option>
+          <option value="2">Công ty</option>
+        </select>
         <button
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          className="px-4 py-2 bg-blue-600 text-white rounded cursor-pointer"
           onClick={() => {
             setPage(1);
             fetchUsers();
@@ -99,7 +138,7 @@ export default function UserManagementPage() {
               <td className="border px-2 text-center">{user.email}</td>
               <td className="border px-2 text-center">{user.phone}</td>
               <td className="border px-2 text-center">{user.address}</td>
-              <td className="border px-2 flex gap-2">
+              <td className="border px-2 flex gap-2 justify-center">
                 <button onClick={() => setEditingUser(user)}>Sửa</button>
                 <button onClick={() => handleDelete(user.userId)} className="text-red-600">Xoá</button>
               </td>

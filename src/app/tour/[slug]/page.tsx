@@ -307,7 +307,7 @@ export default function ProjectDetail() {
     <div className="w-3/4 mx-auto pt-4">
       <h1 className="text-default-color text-2xl pb-4">{project.title}</h1>
       <p className='pb-5'>{project.description}</p>
-      <img src={project.coverImage} alt="project-image-cover" className='max-w-[800px] max-h-[450px] mb-5' />
+      <img src={project.coverImage} alt="project-image-cover" className='w-full max-h-[450px] mb-5' />
 
       {project.scenes.length > 0 ? (
         <>
@@ -336,14 +336,14 @@ export default function ProjectDetail() {
               )
             )}
             <div style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 2, pointerEvents: 'auto' }}>
-              <audio key={currentSceneId} autoPlay controls src={processedSceneData?.audio ? processedSceneData.audio : '/audios/scene-audio.mp3'} style={{ maxWidth: '200px' }}>
+              <audio key={currentSceneId} controls src={processedSceneData?.audio ? processedSceneData.audio : '/audios/scene-audio.mp3'} style={{ maxWidth: '200px' }}>
                 Trình duyệt không hỗ trợ audio.
               </audio>
             </div>
           </main>
 
           <p className='mt-6 font-semibold'>Danh sách ảnh 360°</p>
-          <div className="flex gap-4 overflow-x-auto py-2 mb-4">
+          <div className="flex gap-4 overflow-x-auto py-2 mb-4 flex-wrap">
             {project.scenes.map((scene: SceneData) => (
               <div key={scene.id} className="flex flex-col items-center cursor-pointer"
                 onClick={() => {
