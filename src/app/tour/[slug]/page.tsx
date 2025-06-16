@@ -89,6 +89,7 @@ export default function ProjectDetail() {
   const [isLoadingSceneConfig, setIsLoadingSceneConfig] = useState(false);
   const [activeTab, setActiveTab] = useState<"comment" | "vote">("comment");
   const [isSaved, setIsSaved] = useState<boolean>(false);
+  const [sceneReady, setSceneReady] = useState<boolean>(false);
 
   const params = useParams();
   const projectIdFromParams: Number = Number(params?.slug);
@@ -154,6 +155,7 @@ export default function ProjectDetail() {
         fetchAndPreparePannellumConfig(sceneData.id)
           .then(config => {
             setCurrentPannellumConfig(config);
+            setSceneReady(true);
           })
           .catch(error => {
             console.error("❌ Error setting Pannellum config:", error);
@@ -167,7 +169,6 @@ export default function ProjectDetail() {
           ...sceneData,
           hotspots: sceneData.hotspots.map(hs => ({
             ...hs,
-            cssClass: 'hotspot-hover-scale',
             originalImage: `${API_BASE_URL}/tiles/${project.projectId}/${hs.targetSceneId}/originalImage.jpg`
           }))
         };
@@ -180,21 +181,6 @@ export default function ProjectDetail() {
       }
     }
   }, [currentSceneId, project]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const hotspots = document.querySelectorAll('.pnlm-hotspot');
-
-      if (hotspots.length > 0) {
-        hotspots.forEach((el) => {
-          el.classList.add('hotspot-hover-scale');
-        });
-        clearInterval(interval);
-      }
-    }, 300);
-
-    return () => clearInterval(interval);
-  }, []);
 
   // get congif of scene renderd
   async function fetchAndPreparePannellumConfig(id: any): Promise<MultiResConfigPannellum | null> {
@@ -227,14 +213,39 @@ export default function ProjectDetail() {
   }
 
   // handle change scene
-  const handleSceneTransition = useCallback((nextSceneId: string) => {
-    console.log("🚀 Requesting transition to scene:", nextSceneId);
-    const targetSceneExists = project?.scenes.find(s => s.id == nextSceneId);
-    if (targetSceneExists) {
-      setCurrentSceneId(nextSceneId);
-    } else {
-      console.warn(`🚫 Scene with id "${nextSceneId}" not found. Cannot transition.`);
+  const handleSceneTransition = useCallback(async (nextSceneId: string) => {
+    console.log("🚀 Preloading scene:", nextSceneId);
+
+    const targetScene = project?.scenes.find(s => s.id === nextSceneId);
+    if (!targetScene) {
+      console.warn(`🚫 Scene with id "${nextSceneId}" not found.`);
       alert(`Không tìm thấy cảnh "${nextSceneId}" để chuyển đến.`);
+      return;
+    }
+
+    try {
+      setIsLoadingSceneConfig(true);
+
+      const config = await fetchAndPreparePannellumConfig(nextSceneId);
+      if (!config) throw new Error("Không tải được config");
+
+      const tempSceneData = {
+        ...targetScene,
+        hotspots: targetScene.hotspots.map(hs => ({
+          ...hs,
+          originalImage: `${API_BASE_URL}/tiles/${project.projectId}/${hs.targetSceneId}/originalImage.jpg`
+        }))
+      };
+
+      setProcessedSceneData(tempSceneData);
+      setCurrentPannellumConfig(config);
+      setCurrentSceneId(nextSceneId);
+      setSceneReady(true); // ✅ chỉ hiển thị khi đã sẵn sàng
+    } catch (err) {
+      console.error("❌ Lỗi chuyển scene:", err);
+      alert("Không thể chuyển scene.");
+    } finally {
+      setIsLoadingSceneConfig(false);
     }
   }, [project]);
 
@@ -302,12 +313,7 @@ export default function ProjectDetail() {
         <>
           <h2 className='fancy-text font-semibold text-xl mb-2.5'>Trải nghiệm du lịch 360° <span className="inline-block animate-bounce">✨</span></h2>
           <main className="h-[80vh] flex items-center justify-center bg-gray-900 relative">
-            {isLoadingSceneConfig && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75 z-10 text-white text-lg">
-                Đang tải dữ liệu 360°...
-              </div>
-            )}
-            {!isLoadingSceneConfig && processedSceneData && currentPannellumConfig ? (
+            {processedSceneData && currentPannellumConfig ? (
               <PannellumViewer
                 key={currentSceneId}
                 sceneId={currentSceneId!}
@@ -317,6 +323,7 @@ export default function ProjectDetail() {
                 initialYaw={currentPannellumConfig.yaw ?? processedSceneData.yaw ?? 0}
                 initialHfov={currentPannellumConfig.hfov ?? processedSceneData.hfov ?? 100}
                 onRequestTransition={handleSceneTransition}
+                onSceneLoaded={() => setSceneReady(true)} // ✅ gọi khi scene load xong
                 style={{ width: '100%', height: '100%' }}
               />
             ) : (
@@ -328,14 +335,11 @@ export default function ProjectDetail() {
                 </div>
               )
             )}
-            {/* Overlay cho Audio */}
-            {!isLoadingSceneConfig && (
-              <div style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 2, pointerEvents: 'auto' }}>
-                <audio controls src={processedSceneData?.audio ? processedSceneData.audio : '/audios/scene-audio.mp3'} style={{ maxWidth: '200px' }}>
-                  Trình duyệt không hỗ trợ audio.
-                </audio>
-              </div>
-            )}
+            <div style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 2, pointerEvents: 'auto' }}>
+              <audio key={currentSceneId} autoPlay controls src={processedSceneData?.audio ? processedSceneData.audio : '/audios/scene-audio.mp3'} style={{ maxWidth: '200px' }}>
+                Trình duyệt không hỗ trợ audio.
+              </audio>
+            </div>
           </main>
 
           <p className='mt-6 font-semibold'>Danh sách ảnh 360°</p>

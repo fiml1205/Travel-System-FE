@@ -1,11 +1,8 @@
-// src/components/vr/PannellumViewer.tsx
 'use client';
 
 import React, { useEffect, useRef, memo } from 'react';
 
-// Import CSS của Pannellum. Đảm bảo bạn đã cài đặt hoặc thêm link CDN
-// Ví dụ: import 'pannellum/build/pannellum.css';
-// Đảm bảo script Pannellum đã được tải (ví dụ qua CDN trong layout)
+
 
 interface PannellumHotspotConfig {
   pitch: number;
@@ -51,6 +48,7 @@ interface PannellumViewerProps {
   initialPitch?: number;
   initialYaw?: number;
   initialHfov?: number;
+  onSceneLoaded?: () => void;
 }
 
 const PannellumViewer: React.FC<PannellumViewerProps> = ({
@@ -67,34 +65,41 @@ const PannellumViewer: React.FC<PannellumViewerProps> = ({
   initialPitch,
   initialYaw,
   initialHfov,
+  onSceneLoaded
 }) => {
   const viewerRef = useRef<HTMLDivElement>(null);
   const pannellumInstanceRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!viewerRef.current || !multiResConfig || typeof window === 'undefined' || !(window as any).pannellum) {
+    if (
+      !viewerRef.current ||
+      !multiResConfig ||
+      typeof window === 'undefined' ||
+      !(window as any).pannellum
+    ) {
       console.warn('Pannellum library not found, viewerRef not set, or multiResConfig missing.');
       return;
     }
 
-    // Chuyển đổi hotspots của bạn sang định dạng Pannellum
     const pannellumHotspots: PannellumHotspotConfig[] = hotspots.map(hs => ({
       pitch: hs.pitch,
       yaw: hs.yaw,
       text: hs.label || `Chuyển đến scene ${hs.targetSceneId}`,
       originalImage: hs.originalImage,
-      clickHandlerFunc: (e: MouseEvent, args: { sceneId: string }) => {
-        if (onPreloadNextSceneConfig) {
-          onPreloadNextSceneConfig(args.sceneId);
-        }
-        if (onRequestTransition) {
-          if (viewerRef.current) viewerRef.current.style.transition = 'opacity 0.3s ease-out';
-          if (viewerRef.current) viewerRef.current.style.opacity = '0.3';
+      clickHandlerFunc: (e: MouseEvent) => {
+        const viewer = pannellumInstanceRef.current;
+        if (!viewer) return;
 
-          setTimeout(() => {
-            onRequestTransition(args.sceneId);
-          }, 300);
-        }
+        const { pitch, yaw } = hs;
+
+        viewer.lookAt(pitch, yaw, undefined, 1000); 
+        viewer.setHfov(40, 1000);           
+
+        setTimeout(() => {
+          if (onRequestTransition) {
+            onRequestTransition(hs.targetSceneId);
+          }
+        }, 1200);
       },
       clickHandlerArgs: { sceneId: hs.targetSceneId },
       createTooltipFunc: (hotSpotDiv: HTMLDivElement, args: any) => {
@@ -112,38 +117,62 @@ const PannellumViewer: React.FC<PannellumViewerProps> = ({
         img.style.maxWidth = '50px';
         img.style.maxHeight = '50px';
         img.style.transform = 'none';
-        img.style.position = 'relative'; // hoặc absolute nếu muốn tooltip không bị scale
+        img.style.position = 'relative';
         img.style.objectFit = 'cover';
         img.style.borderRadius = '50%';
         img.style.cursor = 'pointer';
         img.style.border = '2px solid white';
+        img.style.transition = 'transform 0.3s ease';
         img.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
         img.alt = hs.label || `Scene ${hs.targetSceneId}`;
         hotSpotDiv.appendChild(img);
-
+        let labelDiv: HTMLDivElement | null = null;
         if (hs.label) {
-          const labelDiv = document.createElement('div');
+          labelDiv = document.createElement('div');
           labelDiv.textContent = hs.label;
+          labelDiv.style.width = '100px';
+          labelDiv.style.textAlign = 'center';
+          labelDiv.style.padding = '2px 5px';
+          labelDiv.style.wordBreak = 'break-word';
           labelDiv.style.marginTop = '5px';
           labelDiv.style.color = '#fff';
           labelDiv.style.fontSize = '13px';
           labelDiv.style.fontWeight = 'bold';
-          labelDiv.style.textShadow = '0 0 4px rgba(0,0,0,0.8)';
           labelDiv.style.pointerEvents = 'none';
-          labelDiv.style.padding = '2px 5px';
-          labelDiv.style.backgroundColor = 'rgba(0,0,0,0.4)';
+          labelDiv.style.textShadow = '0 0 4px rgba(0,0,0,0.8)';
           labelDiv.style.borderRadius = '3px';
+          labelDiv.style.transition = 'margin-top 0.3s ease';
           hotSpotDiv.appendChild(labelDiv);
         }
+        hotSpotDiv.onmouseenter = () => {
+          img.style.transform = 'scale(2)';
+          if (labelDiv) {
+            labelDiv.style.marginTop = '60px';
+            labelDiv.style.backgroundColor = 'rgba(0,0,0,0.4)';
+          }
+        };
+        hotSpotDiv.onmouseleave = () => {
+          img.style.transform = 'scale(1)';
+          if (labelDiv) {
+            labelDiv.style.marginTop = '5px';
+            labelDiv.style.backgroundColor = 'transparent';
+          }
+        };
       },
       createTooltipArgs: {}
     }));
 
     // Hủy instance cũ nếu có
     if (pannellumInstanceRef.current) {
-      pannellumInstanceRef.current.destroy();
+      try {
+        pannellumInstanceRef.current.destroy();
+      } catch (e) {
+        console.warn("Error destroying Pannellum instance:", e);
+      }
+      pannellumInstanceRef.current = null;
     }
 
+    // Khởi tạo viewer mới
     const viewerOptions = {
       type: 'multires',
       multiRes: multiResConfig,
@@ -157,6 +186,12 @@ const PannellumViewer: React.FC<PannellumViewerProps> = ({
 
     pannellumInstanceRef.current = (window as any).pannellum.viewer(viewerRef.current, viewerOptions);
 
+    // Khi scene load xong
+    pannellumInstanceRef.current.on('load', () => {
+      if (viewerRef.current) viewerRef.current.style.opacity = '1';
+      if (onSceneLoaded) onSceneLoaded();
+    });
+
     return () => {
       if (pannellumInstanceRef.current) {
         try {
@@ -169,6 +204,7 @@ const PannellumViewer: React.FC<PannellumViewerProps> = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneId, multiResConfig, hotspots, projectId, autoLoad, showControls, initialPitch, initialYaw, initialHfov]);
+
 
 
   return (
