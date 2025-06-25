@@ -141,7 +141,7 @@ const PannellumViewer: React.FC<PannellumViewerProps> = ({
         hotSpotDiv.onmouseenter = () => {
           img.style.transform = 'scale(2)';
           if (labelDiv) {
-            labelDiv.style.marginTop = '60px';
+            labelDiv.style.marginTop = '40px';
             labelDiv.style.backgroundColor = 'rgba(0,0,0,0.4)';
           }
         };

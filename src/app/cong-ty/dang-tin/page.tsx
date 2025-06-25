@@ -98,6 +98,7 @@ export default function NewProjectPage() {
             tourSteps,
             scenes,
         };
+
         try {
             await createTour(data);
             alert('✅ Tour đã được đăng!');

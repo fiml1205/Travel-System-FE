@@ -334,8 +334,6 @@ export default function ProjectDetail() {
     }
   };
 
-
-
   return (
     <div className="w-3/4 mx-auto pt-4">
       <h1 className="text-default-color text-2xl pb-4">{project.title}</h1>
@@ -369,7 +367,7 @@ export default function ProjectDetail() {
               )
             )}
             <div style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 2, pointerEvents: 'auto' }}>
-              <audio key={currentSceneId} controls src={processedSceneData?.audio ? processedSceneData.audio : '/audios/scene-audio.mp3'} style={{ maxWidth: '200px' }}>
+              <audio className='w-[200] hover:w-[300] transition-all duration-500' key={currentSceneId} controls src={processedSceneData?.audio ? processedSceneData.audio : '/audios/scene-audio.mp3'}>
                 Trình duyệt không hỗ trợ audio.
               </audio>
             </div>
@@ -380,11 +378,11 @@ export default function ProjectDetail() {
             <Swiper
               modules={[Navigation]}
               spaceBetween={16}
-              slidesPerView={10}
+              slidesPerView={8}
               navigation
               loop
               className="py-2"
-              style={{ padding: '0 40px' }}
+              // style={{ padding: '0 40px' }}
             >
               {project.scenes.map((scene, index) => (
                 <SwiperSlide key={index}>

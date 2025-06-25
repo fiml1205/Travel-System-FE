@@ -190,7 +190,7 @@
   }
 
   40% {
-    color: #ffff00;
+    color: #8a8a09;
   }
 
   60% {
@@ -243,4 +243,8 @@
 .list-scene .swiper-button-prev::after,
 .list-scene .swiper-button-next::after {
   font-size: 27px;
+}
+
+.create-tour-viewer360 {
+  height: 600px !important;
 }
