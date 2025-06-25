@@ -3,6 +3,8 @@ import { useUser } from '@/contexts/UserContext';
 import { comment, editComment, deleteComment, getComment } from "@/app/api/project";
 import { User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuthModal } from '@/contexts/AuthModalContext';
+import { API_BASE_URL } from "@/utilities/config";
 
 interface Comment {
   _id: string;
@@ -24,6 +26,7 @@ export default function CommentBox({ projectId }: CommentBoxProps) {
   const [editingContent, setEditingContent] = useState("");
   const userInfor = useUser();
   const [visibleCount, setVisibleCount] = useState(10);
+  const { openModal } = useAuthModal();
 
   useEffect(() => {
     const callGetComment = async () => {
@@ -39,8 +42,12 @@ export default function CommentBox({ projectId }: CommentBoxProps) {
   }, [projectId]);
 
   const handlePost = async () => {
+    if (!userInfor) {
+      openModal(1)
+      return
+    }
     if (!newComment.trim()) return;
-
+  
     try {
       const res = await comment({ projectId, content: newComment });
       if (res.success) {
@@ -50,7 +57,7 @@ export default function CommentBox({ projectId }: CommentBoxProps) {
     } catch (err) {
       console.error("Lỗi khi gửi comment:", err);
     }
-  };
+  }
 
   const handleUpdate = async (id: string) => {
     try {
@@ -105,7 +112,7 @@ export default function CommentBox({ projectId }: CommentBoxProps) {
           <div key={c._id} className="flex items-start gap-3 border-b pb-3">
             {c.avatar ?
               <img
-                src={`http://localhost:8000/${c.avatar}` || "/default-avatar.png"}
+                src={`${API_BASE_URL}${c.avatar}` || "/default-avatar.png"}
                 className="w-10 h-10 rounded-full object-cover"
                 alt="avatar"
               />
@@ -152,7 +159,7 @@ export default function CommentBox({ projectId }: CommentBoxProps) {
               {userInfor && userInfor.userId == c.userId && editingId !== c._id && (
                 <div className="flex gap-2 mt-1 text-sm text-blue-600">
                   <button
-                  className="cursor-pointer"
+                    className="cursor-pointer"
                     onClick={() => {
                       setEditingId(c._id);
                       setEditingContent(c.content);

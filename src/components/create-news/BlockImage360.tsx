@@ -5,12 +5,12 @@ import * as THREE from 'three';
 import { Canvas, useThree, useLoader } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import { Button } from '@/components/ui/button';
-
+import { API_BASE_URL } from '@/utilities/config';
 
 interface Hotspot {
   position: [number, number, number];
-  yaw: number; // degrees
-  pitch: number; // degrees
+  yaw: number;
+  pitch: number;
   label: string;
   targetSceneId: string;
 }
@@ -48,7 +48,6 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
   const [adding, setAdding] = useState(false);
   const [loading, setLoading] = useState(false);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
-  const API_BASE_URL = 'http://localhost:8000';
 
   useEffect(() => {
     if (initialScenes && initialScenes.length > 0) {
@@ -86,7 +85,7 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
       const newScene: Scene = {
         id: sceneId,
         original: blobURL,
-        originalImage: `${API_BASE_URL}/tiles/${projectId}/${sceneId}/originalImage.jpg`,
+        originalImage: `/tiles/${projectId}/${sceneId}/originalImage.jpg`,
         hotspots: [],
       };
 
@@ -149,8 +148,6 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
     );
   }
 
-
-
   const handleAddHotspot = (pos: [number, number, number]) => {
     if (currentSceneIndex === null) return;
     const updatedScenes = [...scenes];
@@ -179,8 +176,9 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
     const normY = y / length;
     const normZ = z / length;
 
-    const yaw = Math.atan2(normX, normZ);        // radians
-    const pitch = Math.asin(normY);              // radians
+
+    const yaw = Math.atan2(normX, normZ);
+    const pitch = Math.asin(normY);
 
     const toDegrees = (rad: number) => rad * (180 / Math.PI);
 

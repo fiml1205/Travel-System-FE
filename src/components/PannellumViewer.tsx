@@ -2,17 +2,14 @@
 
 import React, { useEffect, useRef, memo } from 'react';
 
-
-
 interface PannellumHotspotConfig {
   pitch: number;
   yaw: number;
-  type?: 'scene' | 'info';
   text?: string;
   URL?: string;
-  sceneId?: string; // ID của scene đích cho hotspot loại 'scene'
-  cssClass?: string; // Class CSS tùy chỉnh cho hotspot
-  clickHandlerFunc?: (e: MouseEvent, args: any) => void; // Hàm xử lý khi click
+  sceneId?: string;
+  cssClass?: string;
+  clickHandlerFunc?: (e: MouseEvent, args: any) => void;
   clickHandlerArgs?: any; // Đối số cho clickHandlerFunc
   createTooltipFunc?: (hotSpotDiv: HTMLDivElement, args: any) => void; // Hàm để tạo tooltip tùy chỉnh
   createTooltipArgs?: any; // Đối số cho createTooltipFunc
@@ -29,7 +26,6 @@ interface MultiResConfig {
 }
 
 interface PannellumViewerProps {
-  projectId: string;
   sceneId: string;
   multiResConfig: MultiResConfig;
   hotspots?: Array<{
@@ -52,12 +48,10 @@ interface PannellumViewerProps {
 }
 
 const PannellumViewer: React.FC<PannellumViewerProps> = ({
-  projectId,
   sceneId,
   multiResConfig,
   hotspots = [],
   onRequestTransition,
-  onPreloadNextSceneConfig,
   className,
   style,
   autoLoad = true,
@@ -92,8 +86,8 @@ const PannellumViewer: React.FC<PannellumViewerProps> = ({
 
         const { pitch, yaw } = hs;
 
-        viewer.lookAt(pitch, yaw, undefined, 1000); 
-        viewer.setHfov(40, 1000);           
+        viewer.lookAt(pitch, yaw, undefined, 1000);
+        viewer.setHfov(40, 1000);
 
         setTimeout(() => {
           if (onRequestTransition) {
@@ -202,9 +196,7 @@ const PannellumViewer: React.FC<PannellumViewerProps> = ({
         pannellumInstanceRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sceneId, multiResConfig, hotspots, projectId, autoLoad, showControls, initialPitch, initialYaw, initialHfov]);
-
+  }, [sceneId, multiResConfig, hotspots, autoLoad, showControls, initialPitch, initialYaw, initialHfov]);
 
 
   return (
@@ -212,7 +204,7 @@ const PannellumViewer: React.FC<PannellumViewerProps> = ({
       ref={viewerRef}
       className={className}
       style={style || { width: '100%', height: '100%', position: 'relative', opacity: 1 }}
-      id={`pannellum-viewer-container-${sceneId}`} // Đảm bảo ID là duy nhất
+      id={`pannellum-viewer-container-${sceneId}`}
     />
   );
 };

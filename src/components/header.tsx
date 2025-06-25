@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Cookies from 'js-cookie';
 import Link from 'next/link';
 import Image from 'next/image';
-import { AlignJustify, Bell, BookOpenText, ChevronDown, Gem, Headset, Heart, LogOut, Search, Smartphone, Trash2, User, X, Newspaper, ScrollText, LockKeyhole } from 'lucide-react';
+import { AlignJustify, Bell, ChevronDown, Heart, LogOut, Search, Trash2, User, X, Newspaper, ScrollText, LockKeyhole } from 'lucide-react';
 import { ModeToggle } from './mode-toggle';
 import { Button } from './ui/button';
 import { listCity, rangePrice } from '@/utilities/constant';
@@ -14,10 +14,13 @@ import { getNoti } from '@/app/api/notification';
 import { changePassword } from '@/app/api/user';
 import Combobox from "./combobox";
 import { useRouter } from 'next/navigation';
+import { BASE_URL, API_BASE_URL } from '@/utilities/config';
 
 export default function Header() {
   const userInfor = useUser();
   const router = useRouter();
+
+  // header
   const { openModal } = useAuthModal();
   const [showMenu, setShowMenu] = useState(false);
   const [showAvatar, setShowAvatar] = useState(false);
@@ -27,12 +30,15 @@ export default function Header() {
   const notiRef = useRef<HTMLDivElement>(null);
   const notiTailRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
+
+  // search tour
   const [listCityRebuild, setListCityRebuild] = useState<any>()
   const [city, setCity] = useState<Number>()
   const [listPriceRebuild, setListPriceRebuild] = useState<any>()
   const [price, setPrice] = useState<Number>()
   const [keyword, setKeyword] = useState('');
-  // chane pwd
+
+  // change pwd
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [passwordOld, setPasswordOld] = useState('');
   const [passwordNew, setPasswordNew] = useState('');
@@ -40,6 +46,7 @@ export default function Header() {
   const [passwordError, setPasswordError] = useState('');
 
   useEffect(() => {
+    // get notification
     if (userInfor) {
       const fetchNotifications = async () => {
         try {
@@ -49,31 +56,27 @@ export default function Header() {
           console.error('Lỗi lấy thông báo:', error);
         }
       };
-
       fetchNotifications();
-
-      const arrayListCityRebuild = listCity.map(item => ({
-        value: item._id,
-        label: item.name
-      }))
-      setListCityRebuild(arrayListCityRebuild)
-      const arrayListPriceRebuild = rangePrice.map(item => ({
-        value: item.id,
-        label: item.value
-      }))
-      setListPriceRebuild(arrayListPriceRebuild)
     }
-  }, []);
 
-  useEffect(() => {
+    // handle select input search
+    const arrayListCityRebuild = listCity.map(item => ({
+      value: item._id,
+      label: item.name
+    }))
+    setListCityRebuild(arrayListCityRebuild)
+    const arrayListPriceRebuild = rangePrice.map(item => ({
+      value: item.id,
+      label: item.value
+    }))
+    setListPriceRebuild(arrayListPriceRebuild)
     const cityOptions = listCity.map(item => ({
       value: item._id,
       label: item.name,
     }));
     setListCityRebuild(cityOptions);
-  }, []);
 
-  useEffect(() => {
+    // handle click outside element
     const handleClickOutside = (event: MouseEvent) => {
       if (
         avatarRef.current &&
@@ -92,24 +95,23 @@ export default function Header() {
         setShowNoti(false);
       }
     };
-
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  // logout
   const handleLogout = () => {
     Cookies.remove('SSToken');
     window.location.href = '/';
   };
 
+  // functions search
   const selectCity = (cityID: Number) => {
     setCity(cityID)
   }
-
   const selectPrice = (price: Number) => {
     setPrice(price)
   }
-
   const handleSearch = () => {
     const queryParams = new URLSearchParams();
 
@@ -117,9 +119,10 @@ export default function Header() {
     if (city) queryParams.set('city', String(city));
     if (price) queryParams.set('price', String(price));
 
-    router.push(`http://localhost:3000/tim-kiem?${queryParams.toString()}`);
+    router.push(`${BASE_URL}/tim-kiem?${queryParams.toString()}`);
   };
 
+  // change password
   const handleChangePassword = async () => {
     if (!passwordOld) {
       setPasswordError('Vui lòng nhập mật khẩu cũ');
@@ -137,7 +140,6 @@ export default function Header() {
       setPasswordError('Mật khẩu xác nhận không khớp');
       return;
     }
-
     setPasswordError('');
     try {
       const res = await changePassword({ passwordOld, passwordNew, passwordConfirm })
@@ -168,52 +170,54 @@ export default function Header() {
         <div className="flex gap-2 items-center">
           <ModeToggle />
           {/* Notification */}
-          <div
-            ref={notiRef}
-            className="relative bg-slate-200 rounded-full w-9 h-9 flex justify-center items-center cursor-pointer"
-            onClick={() => setShowNoti(!showNoti)}
-          >
-            <Bell className="w-5 h-5 select-none" />
-            <span className="absolute -top-2 -right-1 w-5 h-5 rounded-full bg-default-color text-white text-xs flex justify-center items-center">{notifications.length}</span>
-            {showNoti && (
-              <div
-                ref={notiTailRef}
-                className="absolute min-w-80 w-full right-0 top-12 max-h-screen overflow-y-scroll z-10 bg-white border-t border-slate-200 shadow-md scrollbar-custom"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="p-3 border-b flex justify-between">
-                  <p className="text-default-color cursor-pointer">Đọc tất cả</p>
-                  <p className="text-default-color cursor-pointer">Xóa tất cả</p>
-                </div>
-                <div className="flex flex-col gap-3 p-4 group max-h-[600px]">
-                  {notifications.length > 0 ? (
-                    notifications.map((noti, index) => (
-                      <div key={noti._id || index} className="flex gap-3">
-                        <div className="w-11 h-11 flex items-center justify-center bg-slate-200 rounded-full">
-                          <User className="w-8 h-8" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-color-dark">{noti.projectName}</p>
-                          <p className="text-gray-600 leading-5 text-sm">{noti.message}</p>
-                          <div className="flex justify-between mt-2 text-sm text-gray-600">
-                            <span>{new Date(noti.createdAt).toLocaleString('vi-VN')}</span>
-                            <Trash2 className="w-4 h-4 xl:hidden group-hover:block text-color-dark cursor-pointer" />
+          {userInfor &&
+            <div
+              ref={notiRef}
+              className="relative bg-slate-200 rounded-full w-9 h-9 flex justify-center items-center cursor-pointer"
+              onClick={() => setShowNoti(!showNoti)}
+            >
+              <Bell className="w-5 h-5 select-none" />
+              <span className="absolute -top-2 -right-1 w-5 h-5 rounded-full bg-default-color text-white text-xs flex justify-center items-center">{notifications.length}</span>
+              {showNoti && (
+                <div
+                  ref={notiTailRef}
+                  className="absolute min-w-80 w-full right-0 top-12 max-h-screen overflow-y-scroll z-10 bg-white border-t border-slate-200 shadow-md scrollbar-custom"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="p-3 border-b flex justify-between">
+                    <p className="text-default-color cursor-pointer">Đọc tất cả</p>
+                    <p className="text-default-color cursor-pointer">Xóa tất cả</p>
+                  </div>
+                  <div className="flex flex-col gap-3 p-4 group max-h-[600px]">
+                    {notifications.length > 0 ? (
+                      notifications.map((noti, index) => (
+                        <div key={noti._id || index} className="flex gap-3">
+                          <div className="w-11 h-11 flex items-center justify-center bg-slate-200 rounded-full">
+                            <User className="w-8 h-8" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-color-dark">{noti.projectName}</p>
+                            <p className="text-gray-600 leading-5 text-sm">{noti.message}</p>
+                            <div className="flex justify-between mt-2 text-sm text-gray-600">
+                              <span>{new Date(noti.createdAt).toLocaleString('vi-VN')}</span>
+                              <Trash2 className="w-4 h-4 xl:hidden group-hover:block text-color-dark cursor-pointer" />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm italic text-gray-500">Không có thông báo nào</p>
-                  )}
+                      ))
+                    ) : (
+                      <p className="text-sm italic text-gray-500">Không có thông báo nào</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          }
           {/* User area */}
           {userInfor ? (
             <div ref={avatarRef} className="md:flex h-9 gap-2 cursor-pointer items-center relative hidden" onClick={() => setShowAvatar(!showAvatar)}>
               {userInfor.avatar ? (
-                <img src={`http://localhost:8000${userInfor.avatar}`} alt="avatar" className="rounded-full w-9 h-9 object-cover" />
+                <img src={`${API_BASE_URL}${userInfor.avatar}`} alt="avatar" className="rounded-full w-9 h-9 object-cover" />
               ) : (
                 <div className="bg-slate-200 rounded-full w-9 h-9 flex justify-center items-center">
                   <User className="w-5 h-5" />

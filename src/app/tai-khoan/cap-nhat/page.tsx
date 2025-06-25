@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
 import { updateInfor, updateAvatar } from '@/app/api/user';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';\
+import { API_BASE_URL } from '@/utilities/config';
 
 export default function UpdateUserPage() {
     const router = useRouter();
@@ -56,7 +57,7 @@ export default function UpdateUserPage() {
     function getAvatarSrc(preview?: string | null): string {
         if (!preview) return '/default-avatar.png';
         if (preview.startsWith('blob:')) return preview;
-        return `http://localhost:8000${preview}`;
+        return `${API_BASE_URL}${preview}`;
     }
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {

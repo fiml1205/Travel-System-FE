@@ -1,9 +1,8 @@
-// page.tsx
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { CornerRightDown, CornerRightUp } from 'lucide-react';
+import { CornerRightDown, CornerRightUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { rangePrice } from '@/utilities/constant';
 import { useUser } from '@/contexts/UserContext';
@@ -13,6 +12,11 @@ import { getProject, getSaveStatus, handleSaveStatus } from '@/app/api/project';
 import PannellumViewer from '@/components/PannellumViewer';
 import VoteStats from "@/components/VoteStats";
 import CommentBox from "@/components/CommentBox";
+import { API_BASE_URL } from '@/utilities/config';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
 
 // Interface cho cấu hình MultiRes của Pannellum
 interface MultiResConfigPannellum {
@@ -90,12 +94,39 @@ export default function ProjectDetail() {
   const [activeTab, setActiveTab] = useState<"comment" | "vote">("comment");
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [sceneReady, setSceneReady] = useState<boolean>(false);
-
   const params = useParams();
+
   const projectIdFromParams: Number = Number(params?.slug);
   const userInfor = useUser();
   const { openModal } = useAuthModal();
-  const API_BASE_URL = 'http://localhost:8000';
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const itemWidth = 100 + 16;
+
+  const scrollOne = (direction: 'left' | 'right') => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+    const currentScroll = container.scrollLeft;
+
+    if (direction === 'left') {
+      const nextScroll = currentScroll - itemWidth;
+      if (nextScroll < 0) {
+        container.scrollTo({ left: maxScrollLeft, behavior: 'smooth' }); // vòng lại cuối
+      } else {
+        container.scrollTo({ left: nextScroll, behavior: 'smooth' });
+      }
+    } else {
+      const nextScroll = currentScroll + itemWidth;
+      if (nextScroll > maxScrollLeft - 5) {
+        container.scrollTo({ left: 0, behavior: 'smooth' }); // vòng lại đầu
+      } else {
+        container.scrollTo({ left: nextScroll, behavior: 'smooth' });
+      }
+    }
+  };
+
 
   // get project detail
   useEffect(() => {
@@ -233,14 +264,14 @@ export default function ProjectDetail() {
         ...targetScene,
         hotspots: targetScene.hotspots.map(hs => ({
           ...hs,
-          originalImage: `${API_BASE_URL}/tiles/${project.projectId}/${hs.targetSceneId}/originalImage.jpg`
+          originalImage: `${API_BASE_URL}/tiles/${project?.projectId}/${hs.targetSceneId}/originalImage.jpg`
         }))
       };
 
       setProcessedSceneData(tempSceneData);
       setCurrentPannellumConfig(config);
       setCurrentSceneId(nextSceneId);
-      setSceneReady(true); // ✅ chỉ hiển thị khi đã sẵn sàng
+      setSceneReady(true);
     } catch (err) {
       console.error("❌ Lỗi chuyển scene:", err);
       alert("Không thể chuyển scene.");
@@ -303,13 +334,15 @@ export default function ProjectDetail() {
     }
   };
 
+
+
   return (
     <div className="w-3/4 mx-auto pt-4">
       <h1 className="text-default-color text-2xl pb-4">{project.title}</h1>
       <p className='pb-5'>{project.description}</p>
       <img src={project.coverImage} alt="project-image-cover" className='w-full max-h-[450px] mb-5' />
 
-      {project.scenes.length > 0 ? (
+      {project.scenes.length > 0 && (
         <>
           <h2 className='fancy-text font-semibold text-xl mb-2.5'>Trải nghiệm du lịch 360° <span className="inline-block animate-bounce">✨</span></h2>
           <main className="h-[80vh] flex items-center justify-center bg-gray-900 relative">
@@ -323,7 +356,7 @@ export default function ProjectDetail() {
                 initialYaw={currentPannellumConfig.yaw ?? processedSceneData.yaw ?? 0}
                 initialHfov={currentPannellumConfig.hfov ?? processedSceneData.hfov ?? 100}
                 onRequestTransition={handleSceneTransition}
-                onSceneLoaded={() => setSceneReady(true)} // ✅ gọi khi scene load xong
+                onSceneLoaded={() => setSceneReady(true)}
                 style={{ width: '100%', height: '100%' }}
               />
             ) : (
@@ -342,27 +375,41 @@ export default function ProjectDetail() {
             </div>
           </main>
 
-          <p className='mt-6 font-semibold'>Danh sách ảnh 360°</p>
-          <div className="flex gap-4 overflow-x-auto py-2 mb-4 flex-wrap">
-            {project.scenes.map((scene: SceneData) => (
-              <div key={scene.id} className="flex flex-col items-center cursor-pointer"
-                onClick={() => {
-                  if (scene.id !== currentSceneId) {
-                    setCurrentSceneId(scene.id);
-                  }
-                }}
-              >
-                <img
-                  src={scene.originalImage}
-                  alt={scene.name || 'Ảnh 360'}
-                  className={`w-28 h-16 object-cover rounded-md border-2 ${scene.id === currentSceneId ? 'border-blue-500' : 'border-transparent'}`}
-                />
-                <span className="text-sm text-center mt-1">{scene.name || ''}</span>
-              </div>
-            ))}
+          <p className='mt-6 mb-2 font-semibold select-none'>Danh sách ảnh 360°</p>
+          <div className='list-scene'>
+            <Swiper
+              modules={[Navigation]}
+              spaceBetween={16}
+              slidesPerView={10}
+              navigation
+              loop
+              className="py-2"
+              style={{ padding: '0 40px' }}
+            >
+              {project.scenes.map((scene, index) => (
+                <SwiperSlide key={index}>
+                  <div
+                    className="flex flex-col items-center cursor-pointer select-none"
+                    onClick={() => {
+                      if (scene.id !== currentSceneId) {
+                        setCurrentSceneId(scene.id);
+                      }
+                    }}
+                  >
+                    <img
+                      src={`${API_BASE_URL}${scene.originalImage}`}
+                      alt={scene.name || 'Ảnh 360'}
+                      className={`w-[120] h-[74] object-cover rounded-md border-2 ${scene.id === currentSceneId ? 'border-blue-500' : 'border-transparent'
+                        }`}
+                    />
+                    <span className="text-sm text-center mt-1">{scene.name || ''}</span>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </div>
         </>
-      ) : null}
+      )}
 
       <div className='flex justify-between items-start gap-8 mb-6'>
         <div className='w-2/3'>
@@ -457,12 +504,8 @@ export default function ProjectDetail() {
               <span>Tổng giá tour:</span>
               <span className="text-default-color ml-1">{rangePrice.find(p => p.id === Number(project.price))?.value || 'Không xác định'} đ</span>
             </div>
-            {project.sale ? <> <p>Ưu đãi: {project.sale}</p></> : null}
-            <div className="flex justify-center">
-              {
-                userInfor?.userId != project.userId && <Button className='cursor-pointer' onClick={handleBooking}>Tư vấn - Đặt tour</Button>
-              }
-
+            {project.sale ? <> <p><span className='fancy-text'>Ưu đãi:</span> {project.sale}</p></> : null}
+            <div className="flex justify-center">{userInfor?.userId != project.userId && <Button className='cursor-pointer' onClick={handleBooking}>Tư vấn - Đặt tour</Button>}
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useUser } from '@/contexts/UserContext';
 import Cookies from 'js-cookie';
+import { API_BASE_URL, BASE_URL } from '@/utilities/config';
 
 interface User {
   userId: number;
@@ -38,7 +39,7 @@ export default function UserManagementPage() {
     Object.entries(searchParams).forEach(([key, value]) => {
       if (value) query.set(key, value);
     });
-    const res = await fetch(`http://localhost:8000/api/admin/users?${query.toString()}`, {
+    const res = await fetch(`${API_BASE_URL}/api/admin/users?${query.toString()}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -58,7 +59,7 @@ export default function UserManagementPage() {
     if (!confirm('Bạn có chắc chắn muốn xoá người dùng này?')) return;
 
     try {
-      await fetch(`http://localhost:8000/api/admin/user/${id}`, {
+      await fetch(`${API_BASE_URL}/api/admin/user/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -217,7 +218,7 @@ export default function UserManagementPage() {
               <button
                 onClick={async () => {
                   const token = Cookies.get('SSToken');
-                  await fetch(`http://localhost:8000/api/admin/user/${editingUser.userId}`, {
+                  await fetch(`${API_BASE_URL}/api/admin/user/${editingUser.userId}`, {
                     method: 'PUT',
                     headers: {
                       'Content-Type': 'application/json',

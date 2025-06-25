@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react';
-import Image from "next/image";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
@@ -10,6 +9,7 @@ import { Star, MapPinHouse } from "lucide-react"
 import { getListProject } from '@/app/api/project';
 import { rangePrice, listCity } from '@/utilities/constant';
 import { useUser } from '@/contexts/UserContext';
+import { API_BASE_URL } from '@/utilities/config';
 
 export default function Home() {
   const userInfor = useUser();
@@ -38,11 +38,9 @@ export default function Home() {
               <p className="font-semibold text-lg	mb-3">Địa điểm du lịch HOT</p>
               <div className="flex flex-col items-center justify-between gap-10 md:flex-row flex-wrap">
                 {listProject && listProject.map((project: any) => {
-                  const images:any = [];
-                  // const images = project.scenes.map((scene: any) => scene.originalImage);
-                  const firstScene = project.scenes.find((scene: any) => scene.isFirst) || project.scenes[0];
+                  const images = project.scenes.map((scene: any) => `${API_BASE_URL}${scene.originalImage}`);
                   return (
-                    <div key={project._id} className="flex flex-col gap-2 rounded-lg overflow-hidden shadow-lg w-full max-w-[300px] shadow-color-dark h-[360]">
+                    <div key={project._id} className="flex flex-col gap-2 rounded-lg overflow-hidden shadow-lg shadow-color-dark w-full max-w-[300] h-[360] select-none">
                       <div>
                         <Swiper
                           modules={[Navigation, Pagination]}

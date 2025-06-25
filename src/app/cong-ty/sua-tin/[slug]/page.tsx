@@ -10,6 +10,7 @@ import { Trash } from 'lucide-react';
 import RichTextEditor from '@/components/RichTextEditor';
 import { listCity, rangePrice } from '@/utilities/constant';
 import Combobox from '@/components/combobox';
+import { API_BASE_URL, BASE_URL } from '@/utilities/config';
 
 interface TourStep {
   day: string;
@@ -39,7 +40,7 @@ export default function EditTourPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetch(`http://localhost:8000/api/project/${projectId}`);
+      const res = await fetch(`${API_BASE_URL}/api/project/${projectId}`);
       const data = await res.json();
 
       setTour({
@@ -96,7 +97,7 @@ export default function EditTourPage() {
     await editTour(body, projectId);
 
     alert('✅ Cập nhật tour thành công');
-    window.location.href = 'http://localhost:3000/cong-ty/danh-sach-tour';
+    window.location.href = `${BASE_URL}/cong-ty/danh-sach-tour`;
   };
 
   if (loading) return <div className="p-6">Đang tải dữ liệu...</div>;
@@ -167,13 +168,13 @@ export default function EditTourPage() {
               />
             </div>
           ))}
-          {/* <Button onClick={addStep} className="mt-3" variant="secondary">+ Thêm ngày</Button> */}
+          <Button onClick={addStep} className="mt-3" variant="secondary">+ Thêm ngày</Button>
         </div>
       </div>
 
       <div>
         <h2 className="text-lg font-semibold">🌐 Quản lý ảnh 360°</h2>
-        {/* <BlockImage360 projectId={projectId} onScenesChange={setScenes} initialScenes={scenes} /> */}
+        <BlockImage360 projectId={projectId} onScenesChange={setScenes} initialScenes={scenes} />
       </div>
 
       <Button onClick={handleUpdate} className="w-full mt-6 mb-6">💾 Cập nhật tour</Button>

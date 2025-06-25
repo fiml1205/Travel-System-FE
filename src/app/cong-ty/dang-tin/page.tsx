@@ -10,6 +10,7 @@ import { rangePrice } from '@/utilities/constant';
 import RichTextEditor from '@/components/RichTextEditor';
 import { listCity } from '@/utilities/constant'
 import Combobox from '@/components/combobox';
+import { BASE_URL } from '@/utilities/config';
 
 interface TourStep {
     day: string;
@@ -83,6 +84,7 @@ export default function NewProjectPage() {
             alert('Bạn cần điền đầy đủ thông tin có dấu *')
             return
         }
+
         const data = {
             projectId,
             userId: userInfor.userId,
@@ -99,7 +101,7 @@ export default function NewProjectPage() {
         try {
             await createTour(data);
             alert('✅ Tour đã được đăng!');
-            window.location.href = 'http://localhost:3000/cong-ty/danh-sach-tour'
+            window.location.href = `${BASE_URL}/cong-ty/danh-sach-tour`
         } catch (error: any) {
             alert(error.message)
         }

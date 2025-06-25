@@ -44,7 +44,7 @@ export default function VoteStats({ vote, projectId, projectOwnerId }: VoteStats
     }
   };
 
-  const checLogin = () => {
+  const checkLogin = () => {
     if (!userInfor) {
       openModal(1)
       return
@@ -110,7 +110,7 @@ export default function VoteStats({ vote, projectId, projectOwnerId }: VoteStats
             )
           }
 
-          <Button onClick={() => checLogin()} className="">
+          <Button onClick={checkLogin} className="">
             Đánh giá ngay
           </Button>
         </div>

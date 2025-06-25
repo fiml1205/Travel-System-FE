@@ -229,8 +229,18 @@
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-top: 4px; 
+  margin-top: 4px;
   font-size: 12px;
   color: white;
   white-space: nowrap;
+}
+
+.list-scene .swiper-button-next,
+.list-scene .swiper-button-prev {
+  top: 34px;
+}
+
+.list-scene .swiper-button-prev::after,
+.list-scene .swiper-button-next::after {
+  font-size: 27px;
 }

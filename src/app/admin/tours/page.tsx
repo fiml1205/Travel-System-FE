@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
+import { API_BASE_URL, BASE_URL } from '@/utilities/config';
 
 interface Project {
     projectId: number;
@@ -32,7 +33,7 @@ export default function ProjectManagementPage() {
             if (value) query.set(key, value);
         });
         const res = await fetch(
-            `http://localhost:8000/api/admin/projects?${query.toString()}`,
+            `${API_BASE_URL}/api/admin/projects?${query.toString()}`,
             {
                 headers: { Authorization: `Bearer ${token}` },
             }
@@ -51,7 +52,7 @@ export default function ProjectManagementPage() {
     const handleDelete = async (projectId: number) => {
         const token = Cookies.get('SSToken');
         if (!confirm('Bạn có chắc chắn muốn xoá tour này?')) return;
-        await fetch(`http://localhost:8000/api/admin/project/${projectId}`, {
+        await fetch(`${API_BASE_URL}/api/admin/project/${projectId}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` },
         });
@@ -61,7 +62,7 @@ export default function ProjectManagementPage() {
     const toggleLockProject = async (projectId: number) => {
         const token = Cookies.get('SSToken');
         try {
-            await fetch(`http://localhost:8000/api/admin/project/${projectId}/lock`, {
+            await fetch(`${API_BASE_URL}/api/admin/project/${projectId}/lock`, {
                 method: 'PATCH',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -134,7 +135,7 @@ export default function ProjectManagementPage() {
                     {projects.map((p) => (
                         <tr key={p.projectId}>
                             <td className="border px-2 text-center">{p.projectId}</td>
-                            <td className="border px-2"><a href={`http://localhost:3000/tour/${p.projectId}`} target='_blank'>{p.title}</a></td>
+                            <td className="border px-2"><a href={`${BASE_URL}/tour/${p.projectId}`} target='_blank'>{p.title}</a></td>
                             <td className="border px-2 flex gap-2">
                                 <button className="">Sửa</button>
                                 <button
