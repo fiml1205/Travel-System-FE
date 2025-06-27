@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { getListProjectOwn } from '@/app/api/project';
-import Image from "next/image";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
 import Link from "next/link";
-import { Star, MapPinHouse } from "lucide-react"
+import { Star, MapPinHouse, SquarePen } from "lucide-react"
 import { rangePrice, listCity } from '@/utilities/constant';
 import { useUser } from '@/contexts/UserContext';
+import { API_BASE_URL, BASE_URL } from '@/utilities/config';
 
 export default function listTour() {
     const userInfor = useUser();
@@ -17,7 +17,7 @@ export default function listTour() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if(userInfor && userInfor.type == 2) {
+        if (userInfor && userInfor.type == 2) {
             const ListProject = async () => {
                 try {
                     const res = await getListProjectOwn();
@@ -28,7 +28,7 @@ export default function listTour() {
                     setIsLoading(false);
                 }
             };
-    
+
             ListProject();
         } else {
             window.location.href = '/'
@@ -48,12 +48,10 @@ export default function listTour() {
                         <div className='w-full'>
                             <div className="flex flex-col items-center justify-between gap-10 md:flex-row flex-wrap">
                                 {listProject && listProject.map((project: any) => {
-                                    const images: any = [];
-                                    // const images = project.scenes.map((scene: any) => scene.originalImage);
-                                    const firstScene = project.scenes.find((scene: any) => scene.isFirst) || project.scenes[0];
+                                    const images = project.scenes.map((scene: any) => `${API_BASE_URL}${scene.originalImage}`);
                                     return (
                                         <div key={project._id} className="flex flex-col gap-2 rounded-lg overflow-hidden shadow-lg w-full max-w-[400px] shadow-color-dark h-[360]">
-                                            <div>
+                                            <div className='relative'>
                                                 <Swiper
                                                     modules={[Navigation, Pagination]}
                                                     spaceBetween={30}
@@ -76,6 +74,11 @@ export default function listTour() {
                                                         </SwiperSlide>
                                                     ))}
                                                 </Swiper>
+                                                <div className='absolute top-0 right-0 z-10 p-1 m-1 rounded-[10] bg-[gray]'>
+                                                    <Link href={`${BASE_URL}/cong-ty/sua-tin/${project.projectId}`}>
+                                                        <SquarePen className='text-amber-50' />
+                                                    </Link>
+                                                </div>
                                             </div>
                                             <div className="px-3 py-2 flex flex-col gap-2">
                                                 <Link

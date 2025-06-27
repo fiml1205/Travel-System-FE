@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import BlockImage360 from '@/components/create-news/BlockImage360';
+import { getProject, updateProject } from '@/app/api/project';
+import BlockImage360 from '@/components/create-tour/BlockImage360';
 import { Button } from '@/components/ui/button';
-import { useUser } from '@/contexts/UserContext';
-import { editTour } from '@/app/api/handle-tour';
-import { Trash } from 'lucide-react';
 import RichTextEditor from '@/components/RichTextEditor';
-import { listCity, rangePrice } from '@/utilities/constant';
 import Combobox from '@/components/combobox';
-import { API_BASE_URL, BASE_URL } from '@/utilities/config';
+import { rangePrice, listCity } from '@/utilities/constant';
+import { useUser } from '@/contexts/UserContext';
+import { Plus, Trash } from 'lucide-react';
+import { BASE_URL } from '@/utilities/config';
 
 interface TourStep {
   day: string;
@@ -19,117 +19,167 @@ interface TourStep {
 
 export default function EditTourPage() {
   const params = useParams();
-  const projectId: any = params?.slug;
-  const userInfor = useUser();
-
+  const projectId = params.slug;
+  const userInfor = useUser()
   const [loading, setLoading] = useState(true);
-  const [scenes, setScenes] = useState<any[]>([]);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [departureDate, setDepartureDate] = useState('');
+  const [price, setPrice] = useState<number | null>(null);
+  const [tourSteps, setTourSteps] = useState<any[]>([]);
   const [coverImage, setCoverImage] = useState<File | null>(null);
-  const [selectedCity, setSelectedCity] = useState<any>(null);
-  const [listCityRebuild, setListCityRebuild] = useState<any[]>([]);
+  const [coverImageUrl, setCoverImageUrl] = useState<string>('');
+  const [sale, setSale] = useState<string | null>(null);
+  const [scenes, setScenes] = useState<any[]>([]);
+  const [departureCity, setDepartureCity] = useState<number | null>(null);
+  const [listCityRebuild, setListCityRebuild] = useState<any>()
 
-  const [tour, setTour] = useState({
-    title: '',
-    description: '',
-    departureDate: '',
-    price: 0,
-    sale: '',
-    departureCity: null,
-    tourSteps: [] as TourStep[],
-  });
 
   useEffect(() => {
-    const fetchData = async () => {
-      const res = await fetch(`${API_BASE_URL}/api/project/${projectId}`);
-      const data = await res.json();
-
-      setTour({
-        title: data.title,
-        description: data.description,
-        departureDate: data.departureDate,
-        price: data.price,
-        sale: data.sale,
-        departureCity: data.departureCity,
-        tourSteps: data.tourSteps || [],
-      });
-
-      setScenes(data.scenes || []);
-      setSelectedCity(data.departureCity);
-      setLoading(false);
-    };
+    if (!userInfor || userInfor.type == 1) {
+      window.location.href = '/'
+    }
 
     const arrayListCityRebuild = listCity.map(item => ({
       value: item._id,
-      label: item.name,
-    }));
-    setListCityRebuild(arrayListCityRebuild);
+      label: item.name
+    }))
+    setListCityRebuild(arrayListCityRebuild)
+  }, [])
 
-    fetchData();
-  }, [projectId]);
+  const addStep = () => {
+    setTourSteps([...tourSteps, { day: '', content: '' }]);
+  };
 
   const updateStep = (i: number, field: keyof TourStep, value: string) => {
-    const updated = [...tour.tourSteps];
+    const updated = [...tourSteps];
     updated[i][field] = value;
-    setTour(t => ({ ...t, tourSteps: updated }));
+    setTourSteps(updated);
   };
 
   const removeStep = (i: number) => {
-    setTour(t => ({
-      ...t,
-      tourSteps: t.tourSteps.filter((_, idx) => idx !== i),
-    }));
+    setTourSteps(tourSteps.filter((_, idx) => idx !== i));
   };
 
-  const addStep = () => {
-    setTour(t => ({
-      ...t,
-      tourSteps: [...t.tourSteps, { day: '', content: '' }],
-    }));
-  };
+  useEffect(() => {
+    async function fetchProject() {
+      setLoading(true);
+      try {
+        const res = await getProject(projectId);
+        const proj = res.project;
 
-  const handleUpdate = async () => {
-    const body = {
-      ...tour,
-      departureCity: selectedCity,
+        setTitle(proj.title);
+        setDescription(proj.description);
+        setDepartureDate(proj.departureDate);
+        setPrice(Number(proj.price));
+        setTourSteps(proj.tourSteps || []);
+        setCoverImageUrl(proj.coverImage);
+        setSale(proj.sale || '');
+        setScenes(proj.scenes || []);
+        setDepartureCity(proj.departureCity || null);
+      } catch (err) {
+        alert('Không tìm thấy tour!');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProject();
+  }, [projectId]);
+
+  const handleSubmit = async () => {
+    let newCoverImageUrl = coverImageUrl;
+    if (coverImage) {
+      const formData = new FormData();
+      formData.append('file', coverImage);
+      formData.append('projectId', String(projectId));
+      const res = await fetch('/api/upload-project-image-cover', { method: 'POST', body: formData });
+      const result = await res.json();
+      if (!res.ok) {
+        alert(result.error || 'Lỗi upload ảnh');
+        return;
+      }
+      newCoverImageUrl = result.url;
+    }
+
+    const data = {
+      projectId,
+      title,
+      description,
+      departureCity,
+      coverImage: newCoverImageUrl,
+      departureDate,
+      price,
+      sale,
+      tourSteps,
       scenes,
     };
 
-    await editTour(body, projectId);
-
-    alert('✅ Cập nhật tour thành công');
-    window.location.href = `${BASE_URL}/cong-ty/danh-sach-tour`;
+    try {
+      await updateProject(data);
+      alert('✅ Đã lưu chỉnh sửa!');
+      window.location.href = `${BASE_URL}/tour/${projectId}`
+    } catch (error: any) {
+      alert(error.message)
+    }
   };
 
-  if (loading) return <div className="p-6">Đang tải dữ liệu...</div>;
+
+  const selectCity = (cityId: any) => setDepartureCity(cityId)
+
+  if (loading) return <div className="text-center py-10">Đang tải dữ liệu...</div>;
 
   return (
     <div className="mx-auto space-y-6 flex flex-col w-80vw">
       <h1 className="text-2xl font-bold mt-6 text-center">📝 Chỉnh sửa tour du lịch</h1>
+      {/* block detail tour */}
       <div className='w-full space-y-6 flex flex-col'>
         <div>
           <p className='mb-2.5 font-semibold'>Tiêu đề tour <span className='text-red-600'>*</span></p>
-          <input className='border-solid border rounded-xs p-1.5 w-full' placeholder="Tiêu đề tour" value={tour.title} onChange={(e) => setTour(t => ({ ...t, title: e.target.value }))} />
+          <input className='border-solid border rounded-xs p-1.5 w-full' placeholder="Tiêu đề tour" value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
         <div>
           <p className='mb-2.5 font-semibold'>Giới thiệu chung <span className='text-red-600'>*</span></p>
-          <textarea className="mt-2 p-1.5 border-solid border rounded-xs w-full" placeholder="Giới thiệu chung" value={tour.description} onChange={(e) => setTour(t => ({ ...t, description: e.target.value }))} />
+          <textarea className="mt-2 p-1.5 border-solid border rounded-xs w-full" placeholder="Giới thiệu chung" value={description} onChange={(e) => setDescription(e.target.value)} />
+        </div>
+        <div>
+          <p className="mb-2.5 font-semibold">Ảnh đại diện tour <span className='text-red-600'>*</span></p>
+          <input
+            className='border-solid border border-gray-400 rounded-sm pl-1.5'
+            type="file"
+            accept="image/*"
+            onChange={(e) => setCoverImage(e.target.files?.[0] || null)}
+          />
+          {coverImageUrl && (
+            <img
+              src={coverImageUrl}
+              alt="Ảnh đại diện"
+              className="mt-2 max-h-48 rounded border"
+            />
+          )}
         </div>
 
         <div className="flex gap-6">
+          {/* Thành phố */}
           <div>
             <span className="font-semibold">Điểm khởi hành: <span className='text-red-600'>*</span></span>
-            <Combobox listData={listCityRebuild} placeholder={'tỉnh thành'} borderRadius={2} handleFunction={setSelectedCity} />
+            <Combobox
+              listData={listCityRebuild}
+              placeholder={'tỉnh thành'}
+              borderRadius={2}
+              handleFunction={selectCity}
+              value={departureCity}
+            />
           </div>
           <div>
             <span className='font-semibold'>Ngày khởi hành: <span className='text-red-600'>*</span></span>
-            <input className='border-solid border rounded-xs p-1.5 ml-1.5' placeholder="Ngày khởi hành" value={tour.departureDate} onChange={(e) => setTour(t => ({ ...t, departureDate: e.target.value }))} />
+            <input className='border-solid border rounded-xs p-1.5 ml-1.5' placeholder="Ngày khởi hành" value={departureDate} onChange={(e) => setDepartureDate(e.target.value)} />
           </div>
           <div>
             <span className='font-semibold'>Giá: <span className='text-red-600'>*</span></span>
             <select
               className="border-solid border rounded-xs p-1.5 ml-1.5"
-              value={tour.price ?? ''}
-              onChange={(e) => setTour(t => ({ ...t, price: Number(e.target.value) }))}
+              value={price ?? ''}
+              onChange={(e) => setPrice(Number(e.target.value))}
             >
               <option value="">Chọn mức giá</option>
               {rangePrice.map(option => (
@@ -138,20 +188,19 @@ export default function EditTourPage() {
             </select>
           </div>
         </div>
-
         <div>
           <span className='font-semibold'>Ưu đãi:</span>
           <input
             className='border-solid border rounded-xs p-1.5 ml-1.5 min-w-[500]'
             placeholder="Nhập thông tin ưu đãi"
-            value={tour.sale ?? ''}
-            onChange={(e) => setTour(t => ({ ...t, sale: e.target.value }))}
+            value={sale ?? ''}
+            onChange={(e) => setSale(e.target.value)}
           />
         </div>
 
         <div>
           <h2 className="text-lg font-semibold">🧭 Lịch trình tour</h2>
-          {tour.tourSteps.map((step, i) => (
+          {tourSteps.map((step, i) => (
             <div key={i} className="border p-3 rounded mt-2">
               <div className="flex justify-between items-center">
                 <input className='border-solid border rounded-xs p-1.5'
@@ -168,16 +217,15 @@ export default function EditTourPage() {
               />
             </div>
           ))}
-          <Button onClick={addStep} className="mt-3" variant="secondary">+ Thêm ngày</Button>
+          <Button onClick={addStep} className="mt-3" variant="secondary"><Plus className="mr-2" /> Thêm ngày</Button>
         </div>
       </div>
-
+      {/* block image 360 */}
       <div>
         <h2 className="text-lg font-semibold">🌐 Quản lý ảnh 360°</h2>
-        <BlockImage360 projectId={projectId} onScenesChange={setScenes} initialScenes={scenes} />
+        <BlockImage360 projectId={projectId} initialScenes={scenes} onScenesChange={setScenes} />
       </div>
-
-      <Button onClick={handleUpdate} className="w-full mt-6 mb-6">💾 Cập nhật tour</Button>
+      <Button onClick={handleSubmit} className="w-full mt-6 mb-6">Lưu thay đổi</Button>
     </div>
   );
 }

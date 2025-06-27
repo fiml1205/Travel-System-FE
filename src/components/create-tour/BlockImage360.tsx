@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { API_BASE_URL } from '@/utilities/config';
 import { Compass } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
 
 interface Hotspot {
   pitch: number;
@@ -19,6 +23,7 @@ interface Scene {
   original: string;
   originalImage: string;
   hotspots: Hotspot[];
+  multiResConfig?: any;
   audio?: string;
   isFirst?: boolean;
 }
@@ -39,17 +44,53 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
   const panoRef = useRef<HTMLDivElement>(null);
   const viewerInstanceRef = useRef<any>(null);
   const [hotspotVersion, setHotspotVersion] = useState(0);
+  const [hotspotLabels, setHotspotLabels] = useState<string[]>([]);
 
   useEffect(() => {
-    if (initialScenes && initialScenes.length > 0) {
+    if (!initialScenes || initialScenes.length === 0) return;
+
+    if (initialScenes.every(s => !!s.multiResConfig)) {
       setScenes(initialScenes);
       setCurrentSceneIndex(0);
+      return;
     }
-  }, [initialScenes]);
+
+    let cancelled = false;
+    (async () => {
+      const scenesWithConfig = await Promise.all(
+        initialScenes.map(async (scene) => {
+          if (scene.multiResConfig) return scene;
+          try {
+            const configUrl = `${API_BASE_URL}/tiles/${projectId}/${scene.id}/config.json`;
+            const configRes = await fetch(configUrl);
+            const configData = await configRes.json();
+            configData.multiRes.basePath = `${API_BASE_URL}/tiles/${projectId}/${scene.id}/`;
+            return { ...scene, multiResConfig: configData.multiRes };
+          } catch (err) {
+            console.error('Không thể load config cho scene', scene.id, err);
+            return scene;
+          }
+        })
+      );
+      if (!cancelled) {
+        setScenes(scenesWithConfig);
+        setCurrentSceneIndex(0);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, []);
+
 
   useEffect(() => {
     if (onScenesChange) onScenesChange(scenes);
   }, [scenes, onScenesChange]);
+
+  useEffect(() => {
+    if (currentScene) {
+      setHotspotLabels(currentScene.hotspots.map(h => h.label || ""));
+    }
+  }, [currentSceneIndex, scenes]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -65,16 +106,21 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
         method: 'POST',
         body: formData,
       });
-
       const data = await res.json();
       const sceneId = data.data.sceneId;
       const blobURL = URL.createObjectURL(file);
+
+      const configUrl = `${API_BASE_URL}/tiles/${projectId}/${sceneId}/config.json`;
+      const configRes = await fetch(configUrl);
+      let configData = await configRes.json();
+      configData.multiRes.basePath = `${API_BASE_URL}/tiles/${projectId}/${sceneId}/`
 
       const newScene: Scene = {
         id: sceneId,
         original: blobURL,
         originalImage: `/tiles/${projectId}/${sceneId}/originalImage.jpg`,
         hotspots: [],
+        multiResConfig: configData.multiRes,
       };
 
       setScenes((prev) => [...prev, newScene]);
@@ -86,6 +132,7 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
     }
   };
 
+
   useEffect(() => {
     if (!(window as any).pannellum || currentSceneIndex === null || !scenes[currentSceneIndex]) return;
 
@@ -93,15 +140,19 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
     if (!panoRef.current) return;
 
     panoRef.current.innerHTML = '';
+    if (!current.multiResConfig) return;
 
     viewerInstanceRef.current = (window as any).pannellum.viewer(panoRef.current, {
-      type: 'equirectangular',
-      panorama: `${API_BASE_URL}${current.originalImage}`,
+      type: 'multires',
+      multiRes: current.multiResConfig,
       autoLoad: true,
       pitch: 0,
       yaw: 0,
       hotSpots: current.hotspots.map(hs => ({
-        ...hs,
+        pitch: hs.pitch,
+        yaw: hs.yaw,
+        text: hs.label || '',
+        sceneId: hs.targetSceneId,
         cssClass: 'custom-hotspot',
         createTooltipFunc: (hotSpotDiv: any) => {
           hotSpotDiv.innerHTML = '⬤';
@@ -233,6 +284,8 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
 
   const currentScene = currentSceneIndex !== null ? scenes[currentSceneIndex] : null;
 
+  console.log(scenes)
+
   return (
     <div className="space-y-4">
       <input type="file" accept="image/*" className='border border-gray-400 rounded-sm pl-1.5' onChange={handleUpload} />
@@ -240,37 +293,80 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
 
       {/* list scene */}
       {scenes.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto border p-2 rounded">
-          {scenes.map((scene, idx) => (
-            <div key={scene.id} className="w-32">
-              <div className='relative'>
-                <img
-                  src={scene.original}
-                  onClick={() => setCurrentSceneIndex(idx)}
-                  className={`w-32 h-20 object-cover cursor-pointer rounded ${currentSceneIndex === idx ? 'border-blue-600 border-3' : 'border-transparent'}`}
-                />
-                <button
-                  onClick={() => window.confirm('Xoá ảnh và hotspot?') && deleteScene(idx)}
-                  className="absolute top-0 right-0 bg-red-600 text-white rounded px-1 opacity-80"
-                >✕</button>
-              </div>
-              <input
-                className="text-xs mt-1 p-1 border rounded w-full"
-                placeholder="Tên ảnh"
-                value={scene.name ?? ''}
-                onChange={(e) => {
-                  const updated = [...scenes];
-                  updated[idx].name = e.target.value;
-                  setScenes(updated);
-                }}
-              />
-              <button
-                onClick={() => setFirstScene(idx)}
-                className={`text-xs mt-1 px-2 py-0.5 rounded ${scene.isFirst ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
-              >{scene.isFirst ? 'Ảnh đầu tiên' : 'Chọn làm đầu tiên'}</button>
-            </div>
-          ))}
-        </div>
+        <>
+          {/* <Swiper
+            modules={[Navigation]}
+            spaceBetween={16}
+            slidesPerView={8}
+            navigation
+            loop
+            className="py-2"
+          // style={{ padding: '0 40px' }}
+          >
+            {project.scenes.map((scene, index) => (
+              <SwiperSlide key={index}>
+                <div
+                  className="flex flex-col items-center cursor-pointer select-none"
+                  onClick={() => {
+                    if (scene.id !== currentSceneId) {
+                      setCurrentSceneId(scene.id);
+                    }
+                  }}
+                >
+                  <img
+                    src={`${API_BASE_URL}${scene.originalImage}`}
+                    alt={scene.name || 'Ảnh 360'}
+                    className={`w-[120] h-[74] object-cover rounded-md border-2 ${scene.id === currentSceneId ? 'border-blue-500' : 'border-transparent'
+                      }`}
+                  />
+                  <span className="text-sm text-center mt-1">{scene.name || ''}</span>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper> */}
+          <div className="flex gap-2 overflow-x-auto border p-2 rounded">
+            <Swiper
+              modules={[Navigation]}
+              spaceBetween={16}
+              slidesPerView={8}
+              navigation
+              loop
+              className="py-2"
+            >
+              {scenes.map((scene, idx) => (
+                <SwiperSlide key={idx}>
+                  <div key={scene.id} className="w-32">
+                    <div className='relative'>
+                      <img
+                        src={scene.original || `${API_BASE_URL}${scene.originalImage}`}
+                        onClick={() => setCurrentSceneIndex(idx)}
+                        className={`w-32 h-20 object-cover cursor-pointer rounded ${currentSceneIndex === idx ? 'border-blue-600 border-3' : 'border-transparent'}`}
+                      />
+                      <button
+                        onClick={() => window.confirm('Xoá ảnh và hotspot?') && deleteScene(idx)}
+                        className="absolute top-0 right-0 bg-red-600 text-white rounded px-1 opacity-80"
+                      >✕</button>
+                    </div>
+                    <input
+                      className="text-xs mt-1 p-1 border rounded w-full"
+                      placeholder="Tên ảnh"
+                      value={scene.name ?? ''}
+                      onChange={(e) => {
+                        const updated = [...scenes];
+                        updated[idx].name = e.target.value;
+                        setScenes(updated);
+                      }}
+                    />
+                    <button
+                      onClick={() => setFirstScene(idx)}
+                      className={`text-xs mt-1 px-2 py-0.5 rounded ${scene.isFirst ? 'bg-green-600 text-white' : 'bg-gray-200'}`}
+                    >{scene.isFirst ? 'Ảnh đầu tiên' : 'Chọn làm đầu tiên'}</button>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        </>
       )}
 
       {/* render scene, hotspots, audio */}
@@ -304,8 +400,17 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
                   </div>
                   <input
                     placeholder="Label"
-                    value={hs.label}
-                    onChange={(e) => updateHotspot(idx, 'label', e.target.value)}
+                    value={hotspotLabels[idx] ?? ''}
+                    onChange={e => {
+                      const newLabels = [...hotspotLabels];
+                      newLabels[idx] = e.target.value;
+                      setHotspotLabels(newLabels);
+                    }}
+                    onBlur={e => {
+                      if (hotspotLabels[idx] !== currentScene.hotspots[idx]?.label) {
+                        updateHotspot(idx, 'label', hotspotLabels[idx]);
+                      }
+                    }}
                     className="w-full border p-1"
                   />
                   <input
@@ -318,11 +423,10 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
                   {showTargetList === idx && (
                     <div className="flex gap-2 mt-1 overflow-x-auto">
                       {scenes.filter((_, sidx) => sidx !== currentSceneIndex).map((s) => (
-                        <div className='flex flex-col items-center'>
+                        <div key={s.id} className='flex flex-col items-center min-w-[60px] max-w-[60px] w-[60px] flex-shrink-0'>
                           <img
-                            key={s.id}
-                            src={s.original}
-                            className={`w-16 h-12 object-cover cursor-pointer rounded hover:border-blue-500 ${hs.targetSceneId === s.id ? 'border-blue-600 border-3' : 'border-transparent'}`}
+                            src={s.original || `${API_BASE_URL}${s.originalImage}`}
+                            className={`w-full h-12 object-cover cursor-pointer rounded hover:border-blue-500 ${hs.targetSceneId === s.id ? 'border-blue-600 border-3' : 'border-transparent'}`}
                             onClick={() => {
                               updateHotspot(idx, 'targetSceneId', s.id);
                               setShowTargetList(null);

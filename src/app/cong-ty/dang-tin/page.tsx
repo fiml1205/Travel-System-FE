@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@/contexts/UserContext';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash } from 'lucide-react';
-import BlockImage360 from '@/components/create-news/BlockImage360';
-import { createTour } from '@/app/api/handle-tour'
+import BlockImage360 from '@/components/create-tour/BlockImage360';
+import { createProject } from '@/app/api/project'
 import { rangePrice } from '@/utilities/constant';
 import RichTextEditor from '@/components/RichTextEditor';
 import { listCity } from '@/utilities/constant'
@@ -80,7 +80,8 @@ export default function NewProjectPage() {
 
             coverImageUrl = result.url;
         }
-        if (!title || !description || !coverImage || !departureDate || !price || !selectedCity) {
+
+        if (!title || !description || !coverImage || !departureDate || !price || !departureCity) {
             alert('Bạn cần điền đầy đủ thông tin có dấu *')
             return
         }
@@ -90,7 +91,7 @@ export default function NewProjectPage() {
             userId: userInfor.userId,
             title,
             description,
-            departureCity: selectedCity,
+            departureCity: departureCity,
             coverImage: coverImageUrl,
             departureDate,
             price,
@@ -100,19 +101,17 @@ export default function NewProjectPage() {
         };
 
         try {
-            await createTour(data);
+            await createProject(data);
             alert('✅ Tour đã được đăng!');
-            window.location.href = `${BASE_URL}/cong-ty/danh-sach-tour`
+            window.location.href = `${BASE_URL}/tour/${projectId}`
         } catch (error: any) {
             alert(error.message)
         }
 
     };
-    const [selectedCity, setSelectedCity] = useState<any>(null);
 
-    const selectCity = (cityID: Number) => {
-        setSelectedCity(cityID)
-    }
+
+    const selectCity = (cityId: any) => setDepartureCity(cityId)
 
     return (
         <div className="mx-auto space-y-6 flex flex-col w-80vw">
@@ -148,7 +147,7 @@ export default function NewProjectPage() {
                     {/* Thành phố */}
                     <div>
                         <span className="font-semibold">Điểm khởi hành: <span className='text-red-600'>*</span></span>
-                        <Combobox listData={listCityRebuild} placeholder={'tỉnh thành'} borderRadius={2} handleFunction={selectCity} />
+                        <Combobox listData={listCityRebuild} placeholder={'tỉnh thành'} borderRadius={2} handleFunction={selectCity} value={departureCity} />
                     </div>
                     <div>
                         <span className='font-semibold'>Ngày khởi hành: <span className='text-red-600'>*</span></span>

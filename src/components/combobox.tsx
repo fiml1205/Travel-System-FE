@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -19,10 +19,12 @@ import {
 } from "@/components/ui/popover"
 
 // borderRadius: 1 - radius none, 2 - radius left, 3 - radius right, 4 - radius full
-export default function Combobox({ listData, placeholder, borderRadius, handleFunction }: { listData: any, placeholder: any, borderRadius: any, handleFunction: any }) {
+export default function Combobox({ listData, placeholder, borderRadius, handleFunction, value }: {
+    listData: any, placeholder: any, borderRadius: any, handleFunction: any, value?: any
+}) {
     const [open, setOpen] = useState(false)
-    const [value, setValue] = useState("")
     const [borderRadiusValue, setBorderRadiusValue] = useState('')
+
     useEffect(() => {
         switch (borderRadius) {
             case 1:
@@ -37,7 +39,6 @@ export default function Combobox({ listData, placeholder, borderRadius, handleFu
             default:
                 break;
         }
-
     }, [])
 
     return (
@@ -52,6 +53,19 @@ export default function Combobox({ listData, placeholder, borderRadius, handleFu
                     {value
                         ? listData.find((item: any) => item.value === value)?.label
                         : `${placeholder} `}
+                    {/* Dấu X xoá chọn */}
+                    {value && (
+                        <span
+                            className="ml-2 cursor-pointer"
+                            onClick={e => {
+                                e.stopPropagation();
+                                handleFunction("");
+                                setOpen(false);
+                            }}
+                        >
+                            <X className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                        </span>
+                    )}
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full lg:w-[200px] p-0">
@@ -65,7 +79,6 @@ export default function Combobox({ listData, placeholder, borderRadius, handleFu
                                     key={`${item.value}-${index}`}
                                     value={item.value}
                                     onSelect={() => {
-                                        setValue(item.value)
                                         setOpen(false)
                                         handleFunction(item.value)
                                     }}

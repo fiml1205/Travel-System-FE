@@ -15,10 +15,12 @@ import { changePassword } from '@/app/api/user';
 import Combobox from "./combobox";
 import { useRouter } from 'next/navigation';
 import { BASE_URL, API_BASE_URL } from '@/utilities/config';
+import { useSearchParams } from 'next/navigation'
 
 export default function Header() {
   const userInfor = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // header
   const { openModal } = useAuthModal();
@@ -33,9 +35,9 @@ export default function Header() {
 
   // search tour
   const [listCityRebuild, setListCityRebuild] = useState<any>()
-  const [city, setCity] = useState<Number>()
+  const [city, setCity] = useState<any>();
   const [listPriceRebuild, setListPriceRebuild] = useState<any>()
-  const [price, setPrice] = useState<Number>()
+  const [price, setPrice] = useState<any>();
   const [keyword, setKeyword] = useState('');
 
   // change pwd
@@ -44,6 +46,14 @@ export default function Header() {
   const [passwordNew, setPasswordNew] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  useEffect(() => {
+    // Lấy giá trị từ query
+    const cityParam = searchParams.get('city');
+    const priceParam = searchParams.get('price');
+    setCity(cityParam ? Number(cityParam) : undefined);
+    setPrice(priceParam ? Number(priceParam) : undefined);
+  }, [searchParams]);
 
   useEffect(() => {
     // get notification
@@ -279,12 +289,25 @@ export default function Header() {
       {!(userInfor && userInfor.type == 0) &&
         <div className="bg-[url('/images/banner.png')] w-full h-96 bg-cover bg-bottom px-5 py-12 xl:py-20 flex flex-col items-center gap-5">
           <div className="relative w-full max-w-xl bg-white rounded-lg">
-            <input type="text" placeholder="Nhập từ khóa tìm kiếm..." className="h-12 w-full rounded-xl pl-4" value={keyword} onChange={(e) => setKeyword(e.target.value)} />
+            <form
+              onSubmit={e => {
+                e.preventDefault();
+                handleSearch();
+              }}
+            >
+              <input
+                type="text"
+                placeholder="Nhập từ khóa tìm kiếm..."
+                className="h-12 w-full rounded-xl pl-4"
+                value={keyword}
+                onChange={e => setKeyword(e.target.value)}
+              />
+            </form>
             <Search className="absolute top-3 right-3 text-slate-500" />
           </div>
           <div className="w-full max-w-xl flex flex-col gap-4 lg:gap-0 lg:flex-row">
-            <Combobox listData={listCityRebuild} placeholder={'Điểm xuất phát'} borderRadius={2} handleFunction={selectCity} />
-            <Combobox listData={listPriceRebuild} placeholder={'Mức giá'} borderRadius={1} handleFunction={selectPrice} />
+            <Combobox listData={listCityRebuild} placeholder={'Điểm xuất phát'} borderRadius={2} handleFunction={selectCity} value={city} />
+            <Combobox listData={listPriceRebuild} placeholder={'Mức giá'} borderRadius={1} handleFunction={selectPrice} value={price} />
             <Button className="lg:rounded-l-none h-12 font-semibold" onClick={handleSearch}>
               Tìm kiếm
             </Button>

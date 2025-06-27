@@ -17,9 +17,28 @@ export const getListProject = async () => {
     }
 }
 
+
 export const getProject = async (projectId: any) => {
     try {
         const response = await callApi('GET', `project/${projectId}`);
+        return response
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const createProject = async (data: any) => {
+    try {
+        const response = await callApi('POST', 'project/create', data);
+        return response
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const updateProject = async (data: any) => {
+    try {
+        const response = await callApi('POST', `project/update`, data);
         return response
     } catch (error) {
         throw error;

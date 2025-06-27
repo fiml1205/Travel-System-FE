@@ -87,7 +87,7 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<ProjectData | null>(null);
   const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
   const [currentPannellumConfig, setCurrentPannellumConfig] = useState<MultiResConfigPannellum | null>(null);
-  const [processedSceneData, setProcessedSceneData] = useState<SceneData | null>(null); // State mới để chứa scene data đã thêm fake hotspot
+  const [processedSceneData, setProcessedSceneData] = useState<SceneData | null>(null);
   const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
   const [isLoadingProject, setIsLoadingProject] = useState(true);
   const [isLoadingSceneConfig, setIsLoadingSceneConfig] = useState(false);
@@ -99,34 +99,6 @@ export default function ProjectDetail() {
   const projectIdFromParams: Number = Number(params?.slug);
   const userInfor = useUser();
   const { openModal } = useAuthModal();
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const itemWidth = 100 + 16;
-
-  const scrollOne = (direction: 'left' | 'right') => {
-    const container = scrollRef.current;
-    if (!container) return;
-
-    const maxScrollLeft = container.scrollWidth - container.clientWidth;
-    const currentScroll = container.scrollLeft;
-
-    if (direction === 'left') {
-      const nextScroll = currentScroll - itemWidth;
-      if (nextScroll < 0) {
-        container.scrollTo({ left: maxScrollLeft, behavior: 'smooth' }); // vòng lại cuối
-      } else {
-        container.scrollTo({ left: nextScroll, behavior: 'smooth' });
-      }
-    } else {
-      const nextScroll = currentScroll + itemWidth;
-      if (nextScroll > maxScrollLeft - 5) {
-        container.scrollTo({ left: 0, behavior: 'smooth' }); // vòng lại đầu
-      } else {
-        container.scrollTo({ left: nextScroll, behavior: 'smooth' });
-      }
-    }
-  };
-
 
   // get project detail
   useEffect(() => {
@@ -213,7 +185,7 @@ export default function ProjectDetail() {
     }
   }, [currentSceneId, project]);
 
-  // get congif of scene renderd
+  // get config of scene renderd
   async function fetchAndPreparePannellumConfig(id: any): Promise<MultiResConfigPannellum | null> {
     const configUrl = `${API_BASE_URL}/tiles/${project?.projectId}/${id}/config.json`;
     try {
@@ -302,7 +274,7 @@ export default function ProjectDetail() {
       return;
     }
     const contact = userInfor.phone || userInfor.email || 'thông tin liên hệ';
-    const message = `👤 ${userInfor.fullName || userInfor.userName || 'Khách hàng'} vừa đăng ký tư vấn tour "${project.title}. Liên hệ qua ${contact}"`;
+    const message = `${userInfor.fullName || userInfor.userName || 'Khách hàng'} vừa đăng ký tư vấn tour "${project.title}. Liên hệ qua ${contact}"`;
     try {
       await createNoti({
         projectId: projectIdFromParams,
@@ -333,6 +305,8 @@ export default function ProjectDetail() {
       console.error("Lỗi khi lưu tour:", err);
     }
   };
+
+  console.log(currentPannellumConfig)
 
   return (
     <div className="w-3/4 mx-auto pt-4">
