@@ -33,7 +33,7 @@ export default function EditTourPage() {
   const [scenes, setScenes] = useState<any[]>([]);
   const [departureCity, setDepartureCity] = useState<number | null>(null);
   const [listCityRebuild, setListCityRebuild] = useState<any>()
-
+  const [isForeign, setIsForeign] = useState<boolean>(false);
 
   useEffect(() => {
     if (!userInfor || userInfor.type == 1) {
@@ -77,6 +77,7 @@ export default function EditTourPage() {
         setSale(proj.sale || '');
         setScenes(proj.scenes || []);
         setDepartureCity(proj.departureCity || null);
+        setIsForeign(proj.isForeign || false);
       } catch (err) {
         alert('Không tìm thấy tour!');
       } finally {
@@ -110,6 +111,7 @@ export default function EditTourPage() {
       departureDate,
       price,
       sale,
+      isForeign,
       tourSteps,
       scenes,
     };
@@ -158,7 +160,7 @@ export default function EditTourPage() {
           )}
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex gap-6 items-center">
           {/* Thành phố */}
           <div>
             <span className="font-semibold">Điểm khởi hành: <span className='text-red-600'>*</span></span>
@@ -186,6 +188,16 @@ export default function EditTourPage() {
                 <option key={option.id} value={option.id}>{option.value}</option>
               ))}
             </select>
+          </div>
+          <div className='flex gap-2 items-center ml-1.5'>
+            <input
+              type="checkbox"
+              id="checkbox"
+              className='w-[15] h-[15]'
+              checked={isForeign}
+              onChange={e => setIsForeign(e.target.checked)}
+            />
+            <label htmlFor='checkbox' className='select-none'>Tour nước ngoài</label>
           </div>
         </div>
         <div>

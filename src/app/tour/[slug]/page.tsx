@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { CornerRightDown, CornerRightUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CornerRightDown, CornerRightUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { rangePrice } from '@/utilities/constant';
+import { rangePrice, listCity } from '@/utilities/constant';
 import { useUser } from '@/contexts/UserContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { createNoti } from '@/app/api/notification';
@@ -77,6 +77,7 @@ interface ProjectData {
   scenes: SceneData[];
   tourSteps: Array<{ day: string; content: string }>;
   departureDate: string;
+  departureCity: number;
   price: string | number;
   sale?: string;
   userId: Number;
@@ -312,7 +313,7 @@ export default function ProjectDetail() {
     <div className="w-3/4 mx-auto pt-4">
       <h1 className="text-default-color text-2xl pb-4">{project.title}</h1>
       <p className='pb-5'>{project.description}</p>
-      <img src={project.coverImage} alt="project-image-cover" className='w-full max-h-[450px] mb-5' />
+      <img src={project.coverImage} alt="project-image-cover" className='w-full max-h-[450px] mb-5 select-none' />
 
       {project.scenes.length > 0 && (
         <>
@@ -356,7 +357,7 @@ export default function ProjectDetail() {
               navigation
               loop
               className="py-2"
-              // style={{ padding: '0 40px' }}
+            // style={{ padding: '0 40px' }}
             >
               {project.scenes.map((scene, index) => (
                 <SwiperSlide key={index}>
@@ -383,7 +384,7 @@ export default function ProjectDetail() {
         </>
       )}
 
-      <div className='flex justify-between items-start gap-8 mb-6'>
+      <div className='flex justify-between items-start gap-8 mb-6 mt-5'>
         <div className='w-2/3'>
           <div className="detail_tour">
             <p className="text-xl font-bold mb-2">Lịch trình tour</p>
@@ -410,7 +411,7 @@ export default function ProjectDetail() {
             <div className="flex border-b mb-4">
               <button
                 onClick={() => setActiveTab("comment")}
-                className={`px-4 py-2 font-medium ${activeTab === "comment"
+                className={`cursor-pointer px-4 py-2 font-medium ${activeTab === "comment"
                   ? "border-b-2 border-blue-600 text-blue-600"
                   : "text-gray-600 hover:text-blue-500"
                   }`}
@@ -419,7 +420,7 @@ export default function ProjectDetail() {
               </button>
               <button
                 onClick={() => setActiveTab("vote")}
-                className={`px-4 py-2 font-medium ${activeTab === "vote"
+                className={`cursor-pointer px-4 py-2 font-medium ${activeTab === "vote"
                   ? "border-b-2 border-blue-600 text-blue-600"
                   : "text-gray-600 hover:text-blue-500"
                   }`}
@@ -471,6 +472,9 @@ export default function ProjectDetail() {
           <div className="flex flex-col gap-4">
             <span>
               Ngày khởi hành: <span className="font-bold">{project.departureDate}</span>
+            </span>
+            <span>
+              Khởi hành từ: <span className="font-bold">{listCity.find(item => item._id === project.departureCity)?.name || "Không xác định"}</span>
             </span>
             <div className="flex">
               <span>Tổng giá tour:</span>

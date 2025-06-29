@@ -30,6 +30,7 @@ export default function NewProjectPage() {
     const [scenes, setScenes] = useState<any[]>([]);
     const [listCityRebuild, setListCityRebuild] = useState<any>()
     const [departureCity, setDepartureCity] = useState<number | null>(null);
+    const [isForeign, setIsForeign] = useState<boolean>(false);
 
     useEffect(() => {
         if (!userInfor || userInfor.type == 1) {
@@ -96,6 +97,7 @@ export default function NewProjectPage() {
             departureDate,
             price,
             sale,
+            isForeign,
             tourSteps,
             scenes,
         };
@@ -143,7 +145,7 @@ export default function NewProjectPage() {
                     )}
                 </div>
 
-                <div className="flex gap-6">
+                <div className="flex gap-6 items-center">
                     {/* Thành phố */}
                     <div>
                         <span className="font-semibold">Điểm khởi hành: <span className='text-red-600'>*</span></span>
@@ -165,6 +167,16 @@ export default function NewProjectPage() {
                                 <option key={option.id} value={option.id}>{option.value}</option>
                             ))}
                         </select>
+                    </div>
+                    <div className='flex gap-2 items-center ml-1.5'>
+                        <input
+                            type="checkbox"
+                            id="checkbox"
+                            className='w-[15] h-[15]'
+                            checked={isForeign}
+                            onChange={e => setIsForeign(e.target.checked)}
+                        />
+                        <label htmlFor='checkbox' className='select-none'>Tour nước ngoài</label>
                     </div>
                 </div>
                 <div>

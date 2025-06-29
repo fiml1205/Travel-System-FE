@@ -44,6 +44,7 @@ export default function AuthForm({
       }
       onSuccess?.();
     } catch (err: any) {
+      console.log(err)
       setError(err.message || 'Đã có lỗi xảy ra');
     } finally {
       setLoading(false);
@@ -107,7 +108,7 @@ export default function AuthForm({
             </div>
           )}
 
-          {error && <p className="text-13px text-default-color">{error}</p>}
+          {error && <p className="text-default-color">{error}</p>}
         </div>
 
         <div className="flex justify-center">

@@ -1,16 +1,16 @@
 import { callApi } from '@/utilities/functions'
 
-export const getListProjectOwn = async () => {
+export const getListProjectOwn = async (data:any) => {
     try {
-        const response = await callApi('POST', 'user/getListProject');
+        const response = await callApi('POST', 'project/getListProjectOwn', data);
         return response
     } catch (error) {
         throw error;
     }
 }
-export const getListProject = async () => {
+export const getListProject = async (data:any) => {
     try {
-        const response = await callApi('POST', 'project/getListProject');
+        const response = await callApi('POST', 'project/getListProject', data);
         return response
     } catch (error) {
         throw error;

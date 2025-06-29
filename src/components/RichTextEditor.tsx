@@ -33,7 +33,7 @@ export default function RichTextEditor({ value, onChange, projectId }: Props) {
     formData.append('file', file)
     formData.append('projectId', projectId.toString())
 
-    const res = await fetch('/api/upload-image', {
+    const res = await fetch('/api/upload-image-schedule', {
       method: 'POST',
       body: formData,
     })

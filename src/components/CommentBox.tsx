@@ -5,12 +5,14 @@ import { User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuthModal } from '@/contexts/AuthModalContext';
 import { API_BASE_URL } from "@/utilities/config";
+import { timeAgo } from "@/utilities/functions";
 
 interface Comment {
   _id: string;
   userId: number;
   content: string;
   createdAt: string;
+  updateAt: string;
   userName: string;
   avatar?: string;
 }
@@ -152,7 +154,7 @@ export default function CommentBox({ projectId }: CommentBoxProps) {
 
               {/* Thời gian */}
               <p className="text-xs text-gray-500 mt-1">
-                {new Date(c.createdAt).toLocaleString("vi-VN")}
+                {timeAgo(c.updateAt || c.createdAt)}
               </p>
 
               {/* Sửa / Xoá */}

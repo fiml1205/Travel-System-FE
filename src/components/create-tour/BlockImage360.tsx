@@ -246,17 +246,7 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
         body: formData,
       });
     } catch (err) {
-      console.warn('❌ Không thể xoá folder ảnh:', err);
-    }
-
-    try {
-      await fetch('/api/delete-scene', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, sceneId: sceneToDelete.id }),
-      });
-    } catch (err) {
-      console.warn('❌ Không thể xoá folder ảnh:', err);
+      console.error('❌ Không thể xoá folder ảnh:', err);
     }
 
     const updatedScenes = scenes
@@ -284,8 +274,6 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
 
   const currentScene = currentSceneIndex !== null ? scenes[currentSceneIndex] : null;
 
-  console.log(scenes)
-
   return (
     <div className="space-y-4">
       <input type="file" accept="image/*" className='border border-gray-400 rounded-sm pl-1.5' onChange={handleUpload} />
@@ -294,41 +282,11 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
       {/* list scene */}
       {scenes.length > 0 && (
         <>
-          {/* <Swiper
-            modules={[Navigation]}
-            spaceBetween={16}
-            slidesPerView={8}
-            navigation
-            loop
-            className="py-2"
-          // style={{ padding: '0 40px' }}
-          >
-            {project.scenes.map((scene, index) => (
-              <SwiperSlide key={index}>
-                <div
-                  className="flex flex-col items-center cursor-pointer select-none"
-                  onClick={() => {
-                    if (scene.id !== currentSceneId) {
-                      setCurrentSceneId(scene.id);
-                    }
-                  }}
-                >
-                  <img
-                    src={`${API_BASE_URL}${scene.originalImage}`}
-                    alt={scene.name || 'Ảnh 360'}
-                    className={`w-[120] h-[74] object-cover rounded-md border-2 ${scene.id === currentSceneId ? 'border-blue-500' : 'border-transparent'
-                      }`}
-                  />
-                  <span className="text-sm text-center mt-1">{scene.name || ''}</span>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper> */}
           <div className="flex gap-2 overflow-x-auto border p-2 rounded">
             <Swiper
               modules={[Navigation]}
               spaceBetween={16}
-              slidesPerView={8}
+              slidesPerView={scenes.length >= 8 ? 8 : scenes.length}
               navigation
               loop
               className="py-2"

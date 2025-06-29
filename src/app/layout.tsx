@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import "@/globals.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import Image from "next/image";
 import { cookies } from "next/headers";
 import { jwtDecode } from "jwt-decode";
 import { ThemeProvider } from "@/components/theme-provider"
 import UserProvider from '@/contexts/UserProvider';
 import { AuthModalProvider } from '@/contexts/AuthModalContext';
 import AuthModal from '@/components/auth/AuthModal';
+import { API_BASE_URL } from "@/utilities/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +31,7 @@ export default async function RootLayout({ children, }: Readonly<{ children: Rea
       const decoded: any = jwtDecode(SSToken.value);
       if (!decoded?.data) return null;
 
-      const res = await fetch('http://localhost:3000/api/user', {
+      const res = await fetch(`${API_BASE_URL}/api/user/getInfor`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${SSToken.value}`,

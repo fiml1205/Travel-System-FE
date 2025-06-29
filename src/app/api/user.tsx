@@ -27,9 +27,9 @@ export const changePassword = async (data: any) => {
     }
 }
 
-export const getListTourSave = async () => {
+export const getListTourSave = async (data:any) => {
     try {
-        const response = await callApi('GET', 'save/');
+        const response = await callApi('GET', 'save/', data);
         return response
     } catch (error) {
         throw error;

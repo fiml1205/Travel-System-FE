@@ -1,4 +1,4 @@
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, readdir, unlink } from 'fs/promises';
 import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -17,6 +17,13 @@ export async function POST(req: NextRequest) {
     const filepath = path.join(uploadDir, filename);
 
     await mkdir(uploadDir, { recursive: true });
+    const files = await readdir(uploadDir);
+    await Promise.all(
+        files.map(async (f) => {
+            await unlink(path.join(uploadDir, f));
+        })
+    );
+
     await writeFile(filepath, buffer);
 
     const imageUrl = `/uploads/projects/${projectId}/cover/${filename}`;

@@ -23,6 +23,7 @@
   --max-width-400: 400px;
   --max-width-1200: 1200px;
   --width-80vw: 80vw;
+  --width-block-tour: calc(33.33% - 30px);
 }
 
 :root {
