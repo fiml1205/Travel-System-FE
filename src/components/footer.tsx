@@ -6,7 +6,7 @@ export default function Footer() {
     return (
         <div className="bg-slate-200 pb-10 bg-color-dark dark:bg-[black] dark:border-t">
             <div className="m-auto px-7 py-3 pt-10 w-full xl:w-1200px">
-                <Image src="/images/logo-site.png" alt="logo-site" width={200} height={45} />
+                <Image src="/images/logo-site.png" alt="logo-site" className="h-auto w-auto" width={200} height={62} />
                 <div className="mt-4 flex flex-col lg:flex-row gap-4 md:gap-7 lg:gap-7 xl:gap-28">
                     <div className="flex flex-col gap-4 md:flex-row md:gap-12 lg:gap-7 xl:gap-28">
                         <div className="flex flex-col gap-2 ml-1">
@@ -15,8 +15,8 @@ export default function Footer() {
                             <span className="text-13px">Email: hotro@snowmoon.vn</span>
                             {/* <span className="text-13px">Văn phòng Hà Nội: Tầng 11, Tòa Peakview, 36 Hoàng Cầu, Đống Đa</span> */}
                             <div className="flex gap-1 mt-2">
-                                <Image src='/images/bo-cong-thuong.webp' alt="bo-cong-thuong" width={160} height={60} className="mr-2"/>
-                                <Image src='/images/bo-cong-thuong2.webp' alt="bo-cong-thuong" width={160} height={60} />
+                                <Image src='/images/bo-cong-thuong.webp' alt="bo-cong-thuong" height={60} width={160} className="mr-2 h-auto"/>
+                                <Image src='/images/bo-cong-thuong2.webp' alt="bo-cong-thuong" height={60} width={160} className="h-auto"/>
                             </div>
                         </div>
                         <div className="flex flex-col gap-2">

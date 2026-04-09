@@ -12,11 +12,11 @@ export default function ProjectCard({
     project,
     index,
 }: any) {
-    const images = project.scenes?.map((scene: any) => `${API_BASE_URL}${scene.originalImage}`) || [];
+    const images = [project.coverImage, ...project.scenes?.map((scene: any) => `${API_BASE_URL}${scene.originalImage}`)];
 
     return (
         <motion.div
-            key={project._id} 
+            key={project._id}
             className="flex flex-col w-full gap-2 rounded-lg overflow-hidden shadow-lg shadow-color-dark md:w-block-tour h-fit select-none border border-transparent hover:border-sky-300 dark:border-[gray]"
             initial={{ opacity: 0, x: 100 }} // ẩn và dịch sang phải
             whileInView={{ opacity: 1, x: 0 }} // hiện và về đúng vị trí
@@ -24,28 +24,36 @@ export default function ProjectCard({
             transition={{ duration: 0.5, delay: index * 0.1 }} // delay cho từng card
         >
             <div>
-                <Swiper
-                    modules={[Navigation, Pagination]}
-                    spaceBetween={30}
-                    slidesPerView={1}
-                    loop={true}
-                    autoplay={{ delay: 3000 }}
-                    pagination={{ clickable: true }}
-                    navigation={true}
-                >
-                    {(images.length > 0 ? images : [project.coverImage]).map((img: any, index: any) => (
-                        <SwiperSlide key={index}>
-                            <img
-                                src={img || '/images/no-image.jpg'}
-                                alt={`Slide ${index}`}
-                                className="w-full h-40 object-cover"
-                                width={30}
-                                height={30}
-                                loading="lazy"
-                            />
-                        </SwiperSlide>
-                    ))}
-                </Swiper>
+                {images.length === 1 ? (
+                    <img
+                        src={images[0] || '/images/no-image.jpg'}
+                        alt={`Slide ${index}`}
+                        className="w-full h-40 object-cover"
+                        loading="lazy"
+                    />
+                ) : (
+                    <Swiper
+                        modules={[Navigation, Pagination]}
+                        spaceBetween={30}
+                        slidesPerView={1}
+                        loop={true}
+                        autoplay={{ delay: 3000 }}
+                        pagination={{ clickable: true }}
+                        navigation={true}
+                    >
+                        {images.map((img: string, index: number) => (
+                            <SwiperSlide key={index}>
+                                <img
+                                    src={img || '/images/no-image.jpg'}
+                                    alt={`Slide ${index}`}
+                                    className="w-full h-40 object-cover"
+                                    loading="lazy"
+                                />
+                            </SwiperSlide>
+                        ))}
+                    </Swiper>
+                )}
+
             </div>
             <div className="px-3 py-2 flex flex-col gap-2 h-full">
                 <Link
