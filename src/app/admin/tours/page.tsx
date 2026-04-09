@@ -137,7 +137,7 @@ export default function ProjectManagementPage() {
                             <td className="border px-2 text-center">{p.projectId}</td>
                             <td className="border px-2"><a href={`${BASE_URL}/tour/${p.projectId}`} target='_blank'>{p.title}</a></td>
                             <td className="border px-2 flex gap-2">
-                                <button className="">Sửa</button>
+                                <button className=""><a href={`${BASE_URL}/cong-ty/sua-tin/${p.projectId}`} target='_blank'>Sửa</a></button>
                                 <button
                                     onClick={() => toggleLockProject(p.projectId)}
                                     className={p.isLock ? 'text-yellow-600' : 'text-green-600'}

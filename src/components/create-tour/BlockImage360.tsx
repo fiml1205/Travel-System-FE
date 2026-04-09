@@ -376,7 +376,7 @@ export default function BlockImage360({ projectId, onScenesChange, initialScenes
                     value={scenes.find(s => s.id == hs.targetSceneId)?.name || hs.targetSceneId}
                     readOnly
                     onClick={() => setShowTargetList(idx)}
-                    className="w-full border p-1 cursor-pointer bg-white"
+                    className="w-full border p-1 cursor-pointer"
                   />
                   {showTargetList === idx && (
                     <div className="flex gap-2 mt-1 overflow-x-auto">

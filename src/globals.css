@@ -176,6 +176,7 @@
 .tiptap img {
   max-width: 100%;
   height: auto;
+  width: 800px;
   max-height: 450px;
   display: block;
   margin: 0 auto;

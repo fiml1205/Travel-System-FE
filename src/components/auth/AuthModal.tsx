@@ -11,12 +11,14 @@ export default function AuthModal() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[999] bg-black bg-opacity-40 flex justify-center items-center layout">
-      <div className="bg-white relative p-6 rounded w-full max-w-md">
+    <div className="layout">
+      <div className="bg-white relative p-6 rounded md:w-full max-w-md dark:bg-[black] dark:border dark:boder-[gray] w-11/12">
         <X className="absolute top-3 right-3 cursor-pointer" onClick={closeModal} />
-        <p className="text-lg font-semibold mb-4 text-center">
-          {mode === 1 ? "Đăng nhập" : `Đăng ký ${userType === 1 ? "khách hàng" : "công ty"}`}
-        </p>
+        {mode != 3 &&
+          <p className="text-lg font-semibold mb-4 text-center">
+            {mode === 1 ? "Đăng nhập" : `Đăng ký ${userType === 1 ? "khách hàng" : "công ty"}`}
+          </p>
+        }
 
         {mode === 2 && (
           <div className="flex mb-3">
@@ -28,6 +30,7 @@ export default function AuthModal() {
         <AuthForm
           mode={mode}
           userType={userType}
+          closeModal={closeModal}
           onSuccess={() => {
             closeModal();
             window.location.reload();

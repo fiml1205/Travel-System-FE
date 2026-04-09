@@ -58,12 +58,12 @@ export default function RichTextEditor({ value, onChange, projectId }: Props) {
 
   return (
     <div className="border p-2 rounded bg-white">
-        <EditorContent editor={editor} className="p-2 min-h-[200px]" />
+        <EditorContent editor={editor} className="p-2 min-h-[200px] dark:text-[black] dark:border dark:border-gray-400"/>
       <div className="flex gap-2 mb-2">
-        <button onClick={() => editor.chain().focus().toggleBold().run()} className="font-bold">B</button>
-        <button onClick={() => editor.chain().focus().toggleItalic().run()} className="italic">I</button>
-        <button onClick={() => editor.chain().focus().toggleBulletList().run()}>• List</button>
-        <button onClick={triggerFileInput}>📤 Tải ảnh</button>
+        <button onClick={() => editor.chain().focus().toggleBold().run()} className="font-bold dark:text-[black]">B</button>
+        <button onClick={() => editor.chain().focus().toggleItalic().run()} className="italic dark:text-[black]">I</button>
+        <button onClick={() => editor.chain().focus().toggleBulletList().run()} className='dark:text-[black]'>• List</button>
+        <button onClick={triggerFileInput} className='dark:text-[black]'>📤 Tải ảnh</button>
         <input
           ref={fileInputRef}
           type="file"

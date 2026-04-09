@@ -1,19 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react';
+import { getListProjectOwn } from '@/app/api/project';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
 import Link from "next/link";
-import { Star, MapPinHouse } from "lucide-react"
-import { getListProject } from '@/app/api/project';
+import { Star, MapPinHouse, SquarePen } from "lucide-react"
 import { rangePrice, listCity } from '@/utilities/constant';
-import { API_BASE_URL } from '@/utilities/config';
-import { timeAgo } from '@/utilities/functions';
+import { useUser } from '@/contexts/UserContext';
+import { API_BASE_URL, BASE_URL } from '@/utilities/config';
 import { Button } from '@/components/ui/button';
 
-export default function Home() {
+export default function listTour() {
+    const userInfor = useUser();
     const [listProject, setListProject] = useState<any>(null)
+    const [isLoading, setIsLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
@@ -22,20 +24,24 @@ export default function Home() {
     const fetchProjects = async (pageNum = 1) => {
         setLoading(true);
         try {
-            const res = await getListProject({ page: pageNum, limit: LIMIT, type: 1 });
+            const res = await getListProjectOwn({ page: pageNum, limit: LIMIT });
             const newProject = res?.data.listProject;
             setListProject((prev: any) => pageNum == 1 ? newProject : [...prev, ...newProject]);
             setHasMore(newProject.length == LIMIT);
         } catch (error) {
-            setHasMore(false);
+            console.error('Lỗi lấy danh sách tour:', error);
         } finally {
+            setIsLoading(false);
             setLoading(false);
         }
-    }
+    };
 
     useEffect(() => {
-        window.scrollTo(0, 0);
-        fetchProjects(1);
+        if (userInfor && userInfor.type == 2) {
+            fetchProjects(1);
+        } else {
+            window.location.href = '/'
+        }
     }, []);
 
     const handleLoadMore = () => {
@@ -46,19 +52,22 @@ export default function Home() {
         }
     }
 
-
     return (
-        <>
-            <div className="relative">
-                <div className="w-3/4 p-8 mx-auto mb-5 flex flex-col gap-6 xl:max-w-1200px">
+        <div className="relative">
+            <div className="p-6 pt-8 pb-8 md:p-8 mx-auto mb-5 flex flex-col gap-12 xl:max-w-1200px w-full md:w-3/4">
+                <h1 className='text-center font-semibold text-2xl m-3'>Danh sách tour đã tạo</h1>
+                {isLoading ? (
+                    <p>Đang tải kết quả...</p>
+                ) : listProject.length === 0 ? (
+                    <p>Không tìm thấy tour nào phù hợp.</p>
+                ) : (
                     <div className="w-full">
-                        <p className="font-semibold text-lg	mb-3">Tour du lịch nước ngoài</p>
                         <div className="flex flex-col items-center gap-10 md:flex-row flex-wrap">
-                            {listProject && listProject.map((project: any) => {
+                            {listProject && listProject.map((project: any, index: any) => {
                                 const images = project.scenes.map((scene: any) => `${API_BASE_URL}${scene.originalImage}`);
                                 return (
-                                    <div key={project._id} className="flex flex-col gap-2 rounded-lg overflow-hidden shadow-lg shadow-color-dark w-block-tour h-[360] select-none">
-                                        <div>
+                                    <div key={index} className="flex flex-col w-full gap-2 rounded-lg overflow-hidden shadow-lg shadow-color-dark md:w-block-tour h-fit select-none border border-transparent hover:border-sky-300 dark:border-[gray]">
+                                        <div className='relative'>
                                             <Swiper
                                                 modules={[Navigation, Pagination]}
                                                 spaceBetween={30}
@@ -81,8 +90,13 @@ export default function Home() {
                                                     </SwiperSlide>
                                                 ))}
                                             </Swiper>
+                                            <div className='absolute top-0 right-0 z-10 p-1 m-1 rounded-[10] bg-[gray]'>
+                                                <Link href={`${BASE_URL}/cong-ty/sua-tin/${project.projectId}`}>
+                                                    <SquarePen className='text-amber-50' />
+                                                </Link>
+                                            </div>
                                         </div>
-                                        <div className="px-3 py-2 flex flex-col gap-2 h-full">
+                                        <div className="px-3 py-2 flex flex-col gap-2">
                                             <Link
                                                 href={`/tour/${project.projectId}`}
                                                 className="font-semibold line-clamp-2 overflow-hidden text-ellipsis cursor-pointer h-[48]"
@@ -109,9 +123,10 @@ export default function Home() {
                                                     Địa điểm khởi hành: {listCity.find(item => item._id === project.departureCity)?.name || "Không xác định"}
                                                 </p>
                                             </div>
-                                            {project.timeLastBook && <p className="bg-sky-100 w-fit px-2 leading-6 text-sky-500 rounded-lg">Vừa được đặt {timeAgo(project.timeLastBook)}</p>}
 
-                                            <p className="flex justify-end text-lg text-default-color font-semibold mt-auto">
+                                            <p className="bg-sky-100 w-fit px-2 leading-6 text-sky-500 rounded-lg">Vừa được đặt 20 phút trước</p>
+
+                                            <p className="flex justify-end text-lg text-default-color font-semibold">
                                                 {(() => {
                                                     const match = rangePrice.find((p) => p.id === Number(project.price));
                                                     return match ? `Từ ${match.value}` : `Giá: ${project.price}đ`;
@@ -130,8 +145,8 @@ export default function Home() {
                             }
                         </div>
                     </div>
-                </div>
+                )}
             </div>
-        </>
+        </div>
     );
 }

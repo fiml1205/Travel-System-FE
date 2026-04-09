@@ -1,6 +1,15 @@
 import { callApi } from '@/utilities/functions'
 
-export const getListProjectOwn = async (data:any) => {
+export const getListProject = async (data: any) => {
+    try {
+        const response = await callApi('POST', 'project/getListProject', data);
+        return response
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getListProjectOwn = async (data: any) => {
     try {
         const response = await callApi('POST', 'project/getListProjectOwn', data);
         return response
@@ -8,9 +17,10 @@ export const getListProjectOwn = async (data:any) => {
         throw error;
     }
 }
-export const getListProject = async (data:any) => {
+
+export const getListProjectSave = async (data: any) => {
     try {
-        const response = await callApi('POST', 'project/getListProject', data);
+        const response = await callApi('GET', 'save/', data);
         return response
     } catch (error) {
         throw error;

@@ -55,7 +55,7 @@ export default function UpdateUserPage() {
     };
 
     function getAvatarSrc(preview?: string | null): string {
-        if (!preview) return '/default-avatar.png';
+        if (!preview) return '/images/default-avatar.jpg';
         if (preview.startsWith('blob:')) return preview;
         return `${API_BASE_URL}${preview}`;
     }
@@ -92,7 +92,7 @@ export default function UpdateUserPage() {
     };
 
     return (
-        <div className="w-full max-w-xl mx-auto py-6">
+        <div className="md:w-full max-w-xl mx-auto py-6 w-11/12">
             <h1 className="text-xl font-bold mb-4">Cập nhật thông tin cá nhân</h1>
 
             {/* Ảnh avatar */}

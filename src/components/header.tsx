@@ -2,24 +2,29 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Cookies from 'js-cookie';
+import { useRouter } from 'next/navigation';
+import { usePathname } from "next/navigation";
+import { useSearchParams } from 'next/navigation'
+import { BASE_URL, API_BASE_URL } from '@/utilities/config';
+import { useUser } from '@/contexts/UserContext';
+import { getNoti, markAllNotiRead } from '@/app/api/notification';
 import Link from 'next/link';
 import Image from 'next/image';
-import { AlignJustify, Bell, ChevronDown, Heart, LogOut, Search, Trash2, User, X, Newspaper, ScrollText, LockKeyhole } from 'lucide-react';
+import { AlignJustify, Bell, ChevronDown, Heart, LogOut, Search, User, X, Newspaper, ScrollText, LockKeyhole, ListCheck } from 'lucide-react';
 import { ModeToggle } from './mode-toggle';
 import { Button } from './ui/button';
 import { listCity, rangePrice } from '@/utilities/constant';
-import { useUser } from '@/contexts/UserContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
-import { getNoti } from '@/app/api/notification';
-import { changePassword } from '@/app/api/user';
+import ChangePasswordModal from './ChangePasswordModal';
+
 import Combobox from "./combobox";
-import { useRouter } from 'next/navigation';
-import { BASE_URL, API_BASE_URL } from '@/utilities/config';
-import { useSearchParams } from 'next/navigation'
+
+
 
 export default function Header() {
   const userInfor = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // header
@@ -31,7 +36,6 @@ export default function Header() {
   const avatarTailRef = useRef<HTMLDivElement>(null);
   const notiRef = useRef<HTMLDivElement>(null);
   const notiTailRef = useRef<HTMLDivElement>(null);
-  const [notifications, setNotifications] = useState<any[]>([]);
 
   // search tour
   const [listCityRebuild, setListCityRebuild] = useState<any>()
@@ -42,31 +46,58 @@ export default function Header() {
 
   // change pwd
   const [showChangePassword, setShowChangePassword] = useState(false);
-  const [passwordOld, setPasswordOld] = useState('');
-  const [passwordNew, setPasswordNew] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+
+  // handle notification
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [pageNoti, setPageNoti] = useState(1);
+  const [hasMoreNoti, setHasMoreNoti] = useState(true);
+  const [loadingNoti, setLoadingNoti] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const LIMIT = 10;
+
+  const fetchNotifications = async (page = 1) => {
+    setLoadingNoti(true);
+    try {
+      const res = await getNoti({ page, limit: LIMIT });
+      if (res?.data) {
+        setNotifications(page === 1 ? res.data.listNoti : [...notifications, ...res.data.listNoti]);
+        setHasMoreNoti(res.data.listNoti.length === LIMIT);
+        setUnreadCount(res.data.unread ?? 0);
+        setPageNoti(page);
+      }
+    } catch (error) {
+      setHasMoreNoti(false);
+    } finally {
+      setLoadingNoti(false);
+    }
+  };
+
+  const FuncMarkAllNotiRead = async () => {
+    await markAllNotiRead();
+  };
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  useEffect(() => {
+    setShowMenu(false);
+  }, [pathname]);
 
   useEffect(() => {
     // Lấy giá trị từ query
     const cityParam = searchParams.get('city');
     const priceParam = searchParams.get('price');
+    const keywordParam = searchParams.get('keyword');
     setCity(cityParam ? Number(cityParam) : undefined);
     setPrice(priceParam ? Number(priceParam) : undefined);
+    setKeyword(keywordParam ? String(keywordParam) : '');
   }, [searchParams]);
 
   useEffect(() => {
     // get notification
     if (userInfor) {
-      const fetchNotifications = async () => {
-        try {
-          const res = await getNoti();
-          setNotifications(res?.data.listNoti || []);
-        } catch (error) {
-          console.error('Lỗi lấy thông báo:', error);
-        }
-      };
-      fetchNotifications();
+      fetchNotifications(1);
     }
 
     // handle select input search
@@ -105,9 +136,15 @@ export default function Header() {
         setShowNoti(false);
       }
     };
+
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
+
+  const handleLoadMoreNoti = () => {
+    if (loadingNoti || !hasMoreNoti) return;
+    fetchNotifications(pageNoti + 1);
+  };
 
   // logout
   const handleLogout = () => {
@@ -132,42 +169,6 @@ export default function Header() {
     router.push(`${BASE_URL}/tim-kiem?${queryParams.toString()}`);
   };
 
-  // change password
-  const handleChangePassword = async () => {
-    if (!passwordOld) {
-      setPasswordError('Vui lòng nhập mật khẩu cũ');
-      return;
-    }
-    if (!passwordNew) {
-      setPasswordError('Vui lòng nhập mật khẩu mới');
-      return;
-    }
-    if (!passwordConfirm) {
-      setPasswordError('Vui lòng nhập lại mật khẩu mới để xác nhận');
-      return;
-    }
-    if (passwordNew !== passwordConfirm) {
-      setPasswordError('Mật khẩu xác nhận không khớp');
-      return;
-    }
-    setPasswordError('');
-    try {
-      const res = await changePassword({ passwordOld, passwordNew, passwordConfirm })
-      if (res.success) {
-        alert('✅ Đổi mật khẩu thành công');
-        setShowChangePassword(false);
-        setPasswordOld('');
-        setPasswordNew('');
-        setPasswordConfirm('');
-        setPasswordError('');
-      } else {
-        setPasswordError(res.message || 'Lỗi đổi mật khẩu');
-      }
-    } catch (err: any) {
-      setPasswordError(err.message);
-    }
-  };
-
   return (
     <>
       {/* header */}
@@ -183,40 +184,58 @@ export default function Header() {
           {userInfor &&
             <div
               ref={notiRef}
-              className="relative bg-slate-200 rounded-full w-9 h-9 flex justify-center items-center cursor-pointer"
-              onClick={() => setShowNoti(!showNoti)}
+              className="relative bg-slate-200 rounded-full w-9 h-9 flex justify-center items-center cursor-pointer dark:bg-[black] dark:border dark:border-[white]"
+              onClick={async () => {
+                setShowNoti(!showNoti)
+                if (!showNoti) {
+                  await FuncMarkAllNotiRead();
+                  setNotifications(notifications => notifications.map(n => ({ ...n, isRead: true })));
+                  setUnreadCount(0);
+                }
+              }}
             >
               <Bell className="w-5 h-5 select-none" />
-              <span className="absolute -top-2 -right-1 w-5 h-5 rounded-full bg-default-color text-white text-xs flex justify-center items-center">{notifications.length}</span>
+              {
+                unreadCount > 0 &&
+                <span className="absolute -top-2 -right-1 w-5 h-5 rounded-full bg-default-color text-white text-xs flex justify-center items-center">{unreadCount}</span>
+              }
               {showNoti && (
                 <div
                   ref={notiTailRef}
-                  className="absolute min-w-80 w-full right-0 top-12 max-h-screen overflow-y-scroll z-10 bg-white border-t border-slate-200 shadow-md scrollbar-custom"
+                  className="absolute min-w-80 w-full right-0 top-12 max-h-screen overflow-y-scroll z-10 bg-white border-t border-slate-200 shadow-md scrollbar-custom dark:bg-[black] dark:border-0"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="p-3 border-b flex justify-between">
-                    <p className="text-default-color cursor-pointer">Đọc tất cả</p>
-                    <p className="text-default-color cursor-pointer">Xóa tất cả</p>
-                  </div>
                   <div className="flex flex-col gap-3 p-4 group max-h-[600px]">
+                    <p className='font-semibold text-xl border-b pb-0.5'>Thông báo</p>
                     {notifications.length > 0 ? (
                       notifications.map((noti, index) => (
-                        <div key={noti._id || index} className="flex gap-3">
-                          <div className="w-11 h-11 flex items-center justify-center bg-slate-200 rounded-full">
-                            <User className="w-8 h-8" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-semibold text-color-dark">{noti.projectName}</p>
-                            <p className="text-gray-600 leading-5 text-sm">{noti.message}</p>
-                            <div className="flex justify-between mt-2 text-sm text-gray-600">
-                              <span>{new Date(noti.createdAt).toLocaleString('vi-VN')}</span>
-                              <Trash2 className="w-4 h-4 xl:hidden group-hover:block text-color-dark cursor-pointer" />
+                        <Link key={noti._id || index} href={'/cong-ty/quan-ly-dat-tour'}>
+                          <div className={`flex gap-3`}>
+                            <div className="w-11 h-11 flex items-center justify-center bg-slate-200 rounded-full">
+                              {noti.avatarUser ?
+                                (<>
+                                  <img src={`${API_BASE_URL}${noti.avatarUser}`} alt="avatar" className='rounded-full w-full h-full' />
+                                </>) : <User className="w-8 h-8" />
+                              }
+
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-semibold">{noti.projectName}</p>
+                              <p className="text-gray-600 leading-5 text-sm">{noti.message}</p>
+                              <div className="flex justify-between mt-2 text-sm text-gray-600">
+                                <span>{new Date(noti.createdAt).toLocaleString('vi-VN')}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </Link>
                       ))
                     ) : (
                       <p className="text-sm italic text-gray-500">Không có thông báo nào</p>
+                    )}
+                    {hasMoreNoti && (
+                      <Button onClick={handleLoadMoreNoti} disabled={loadingNoti}>
+                        {loadingNoti ? "Đang tải..." : "Xem thêm"}
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -233,35 +252,56 @@ export default function Header() {
                   <User className="w-5 h-5" />
                 </div>
               )}
-              <span className="font-semibold">{userInfor.userName}</span>
+              <span className="font-semibold max-w-[150px] whitespace-nowrap overflow-hidden text-ellipsis">{userInfor.userName}</span>
               <ChevronDown className="w-4 h-4" />
               {showAvatar && (
                 <div ref={avatarTailRef} className="absolute top-14 right-0 w-52 bg-background border border-slate-200 p-3 rounded-xl shadow-lg text-sm z-10" onClick={(e) => e.stopPropagation()}>
-                  {userInfor.type == 2 &&
+                  {userInfor.type == 0 &&
                     <>
-                      <Link href="/cong-ty/dang-tin" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                      <Link href="/admin/tours" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 dark:hover:bg-gray-800">
                         <Newspaper className="w-5 h-5" />
-                        <span>Đăng tin</span>
+                        <span>Quản lý tour</span>
                       </Link>
-                      <Link href="/cong-ty/danh-sach-tour" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
-                        <ScrollText className="w-5 h-5" />
-                        <span>Danh sách tour</span>
+                      <Link href="/admin/users" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 dark:hover:bg-gray-800">
+                        <Newspaper className="w-5 h-5" />
+                        <span>Quản lý user</span>
                       </Link>
                     </>
                   }
-                  <Link href="/tai-khoan/cap-nhat" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
-                    <User className="w-5 h-5" />
-                    <span>Hồ sơ cá nhân</span>
-                  </Link>
-                  <Link href="/tai-khoan/yeu-thich" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
-                    <Heart className="w-5 h-5 text-default-color" />
-                    <span>Danh sách yêu thích</span>
-                  </Link>
-                  <div className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2" onClick={() => setShowChangePassword(true)}>
+                  {userInfor.type == 2 &&
+                    <>
+                      <Link href="/cong-ty/dang-tin" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 dark:hover:bg-gray-800">
+                        <Newspaper className="w-5 h-5" />
+                        <span>Đăng tin</span>
+                      </Link>
+                      <Link href="/cong-ty/quan-ly-tour" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 dark:hover:bg-gray-800">
+                        <ScrollText className="w-5 h-5" />
+                        <span>Quản lý tour</span>
+                      </Link>
+                      <Link href="/cong-ty/quan-ly-dat-tour" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 dark:hover:bg-gray-800">
+                        <ListCheck className="w-5 h-5" />
+                        <span>Quản lý đặt tour</span>
+                      </Link>
+                    </>
+                  }
+                  {userInfor.type != 0 &&
+                    <>
+                      <Link href="/tai-khoan/cap-nhat" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 dark:hover:bg-gray-800">
+                        <User className="w-5 h-5" />
+                        <span>Hồ sơ cá nhân</span>
+                      </Link>
+                      <Link href="/tai-khoan/yeu-thich" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 dark:hover:bg-gray-800">
+                        <Heart className="w-5 h-5 text-default-color" />
+                        <span>Danh sách yêu thích</span>
+                      </Link>
+                    </>
+                  }
+                  <div className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 dark:hover:bg-gray-800" onClick={() => setShowChangePassword(true)}>
+
                     <LockKeyhole className="w-5 h-5" />
                     <span>Đổi mật khẩu</span>
                   </div>
-                  <div className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 cursor-pointer" onClick={handleLogout}>
+                  <div className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 dark:hover:bg-gray-800 cursor-pointer" onClick={handleLogout}>
                     <LogOut className="w-5 h-5" />
                     <span>Đăng xuất</span>
                   </div>
@@ -277,11 +317,66 @@ export default function Header() {
           <AlignJustify className="w-5 h-5 cursor-pointer xl:hidden" onClick={() => setShowMenu(!showMenu)} />
         </div>
         {/* Slide Menu Mobile */}
-        <div className={`absolute top-0 left-0 w-full h-full z-20 bg-white p-4 transition-transform duration-700 ${showMenu ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className={`absolute top-0 left-0 w-full h-full z-20 bg-white p-4 dark:bg-[black] transition-transform duration-700 ${showMenu ? 'translate-x-0' : '-translate-x-full'}`}>
           <X className="absolute top-3 right-3" onClick={() => setShowMenu(false)} />
           <div className="mt-10 flex flex-col gap-3">
-            <Button variant="outline" className="w-full" onClick={() => { openModal(2); setShowMenu(false); }}>Đăng ký</Button>
-            <Button className="w-full" onClick={() => { openModal(1); setShowMenu(false); }}>Đăng nhập</Button>
+            {userInfor ? (
+              <>
+                {userInfor.type == 0 &&
+                  <>
+                    <Link href="/admin/tours" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                      <Newspaper className="w-5 h-5" />
+                      <span>Quản lý tour</span>
+                    </Link>
+                    <Link href="/admin/users" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                      <Newspaper className="w-5 h-5" />
+                      <span>Quản lý user</span>
+                    </Link>
+                  </>
+                }
+                {userInfor.type == 2 &&
+                  <>
+                    <Link href="/cong-ty/dang-tin" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                      <Newspaper className="w-5 h-5" />
+                      <span>Đăng tin</span>
+                    </Link>
+                    <Link href="/cong-ty/quan-ly-tour" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                      <ScrollText className="w-5 h-5" />
+                      <span>Quản lý tour</span>
+                    </Link>
+                    <Link href="/cong-ty/quan-ly-dat-tour" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                      <ListCheck className="w-5 h-5" />
+                      <span>Quản lý đặt tour</span>
+                    </Link>
+                  </>
+                }
+                {userInfor.type != 0 &&
+                  <>
+                    <Link href="/tai-khoan/cap-nhat" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                      <User className="w-5 h-5" />
+                      <span>Hồ sơ cá nhân</span>
+                    </Link>
+                    <Link href="/tai-khoan/yeu-thich" className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2">
+                      <Heart className="w-5 h-5 text-default-color" />
+                      <span>Danh sách yêu thích</span>
+                    </Link>
+                  </>
+                }
+                <div className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2" onClick={() => setShowChangePassword(true)}>
+                  <LockKeyhole className="w-5 h-5" />
+                  <span>Đổi mật khẩu</span>
+                </div>
+                <div className="flex items-center gap-4 py-2 hover:bg-slate-200 rounded pl-2 cursor-pointer" onClick={handleLogout}>
+                  <LogOut className="w-5 h-5" />
+                  <span>Đăng xuất</span>
+                </div></>
+            ) : (
+              <>
+                <Button variant="outline" className="w-full" onClick={() => { openModal(2); setShowMenu(false); }}>Đăng ký</Button>
+                <Button className="w-full" onClick={() => { openModal(1); setShowMenu(false); }}>Đăng nhập</Button>
+              </>
+            )
+            }
           </div>
         </div>
       </header>
@@ -297,8 +392,8 @@ export default function Header() {
             >
               <input
                 type="text"
-                placeholder="Nhập từ khóa tìm kiếm..."
-                className="h-12 w-full rounded-xl pl-4"
+                placeholder="Bạn muốn đi đâu?"
+                className="h-12 w-full rounded-xl pl-4 dark:bg-slate-200 dark:text-[black]"
                 value={keyword}
                 onChange={e => setKeyword(e.target.value)}
               />
@@ -314,50 +409,14 @@ export default function Header() {
           </div>
         </div>
       }
-      {/* block change pwd */}
-      {showChangePassword && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center layout">
-          <div className="bg-white p-6 rounded-xl w-full max-w-md relative">
-            <X
-              className="absolute top-3 right-3 cursor-pointer"
-              onClick={() => {
-                setShowChangePassword(false);
-                setPasswordOld('');
-                setPasswordNew('');
-                setPasswordConfirm('');
-              }}
-            />
-            <h2 className="text-lg font-bold mb-4">Đổi mật khẩu</h2>
-            <input
-              type="password"
-              placeholder="Mật khẩu cũ"
-              className="w-full mb-3 p-2 border rounded"
-              value={passwordOld}
-              onChange={(e) => setPasswordOld(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Mật khẩu mới"
-              className="w-full mb-3 p-2 border rounded"
-              value={passwordNew}
-              onChange={(e) => setPasswordNew(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Xác nhận mật khẩu mới"
-              className="w-full mb-4 p-2 border rounded"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-            />
-            {passwordError && (
-              <p className="text-red-600 text-sm mb-2">{passwordError}</p>
-            )}
-            <Button className="w-full" onClick={handleChangePassword}>
-              Cập nhật
-            </Button>
-          </div>
-        </div>
-      )}
+
+      {/* component change pwd */}
+      <ChangePasswordModal
+        open={showChangePassword}
+        onClose={() => setShowChangePassword(false)}
+        type={1}
+        account={''}
+      />
     </>
   );
 }

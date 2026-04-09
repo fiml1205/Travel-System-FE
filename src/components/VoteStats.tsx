@@ -53,7 +53,7 @@ export default function VoteStats({ vote, projectId, projectOwnerId }: VoteStats
   }
 
   return (
-    <div className="w-full border rounded-md mt-6 p-4 bg-gray-50">
+    <div className="w-full border rounded-md mt-6 p-4 bg-gray-50 dark:bg-[black]">
       <div className="flex gap-8 select-none items-center">
         {/* Cột trái */}
         <div className="text-center w-1/3">
@@ -117,9 +117,9 @@ export default function VoteStats({ vote, projectId, projectOwnerId }: VoteStats
       )}
 
       {isOpen && (
-        <div className="fixed inset-0 z-[999] bg-black bg-opacity-40 flex justify-center items-center layout">
-          <div className="bg-white p-6 rounded-lg w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-3">Đánh giá tour</h2>
+        <div className="layout">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md dark:border dark:border-[gray] dark:bg-[black]">
+            <h2 className="text-lg font-semibold mb-3 text-center">Đánh giá tour</h2>
             <div className="flex justify-center gap-2 mb-4">
               {Array.from({ length: 5 }).map((_, i) => (
                 <svg
@@ -135,11 +135,11 @@ export default function VoteStats({ vote, projectId, projectOwnerId }: VoteStats
             </div>
             {!done ? (
               <div className="flex justify-between">
-                <button onClick={() => setIsOpen(false)} className="px-4 py-2 rounded border">Hủy</button>
+                <button onClick={() => setIsOpen(false)} className="px-4 py-2 rounded border cursor-pointer dark:bg-[gray]">Hủy</button>
                 <button
                   onClick={submitVote}
                   disabled={submitting || selected === 0}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 disabled:opacity-50"
+                  className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
                 >
                   {submitting ? "Đang gửi..." : "Gửi đánh giá"}
                 </button>

@@ -38,6 +38,7 @@ export default function EditTourPage() {
   useEffect(() => {
     if (!userInfor || userInfor.type == 1) {
       window.location.href = '/'
+      return
     }
 
     const arrayListCityRebuild = listCity.map(item => ({
@@ -67,6 +68,11 @@ export default function EditTourPage() {
       try {
         const res = await getProject(projectId);
         const proj = res.project;
+
+        if (proj.userId != userInfor.userId && userInfor.type != 0) {
+          window.location.href = '/'
+          return
+        }
 
         setTitle(proj.title);
         setDescription(proj.description);

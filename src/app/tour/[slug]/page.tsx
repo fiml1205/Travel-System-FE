@@ -7,16 +7,20 @@ import { Button } from '@/components/ui/button';
 import { rangePrice, listCity } from '@/utilities/constant';
 import { useUser } from '@/contexts/UserContext';
 import { useAuthModal } from '@/contexts/AuthModalContext';
-import { createNoti } from '@/app/api/notification';
-import { getProject, getSaveStatus, handleSaveStatus } from '@/app/api/project';
+import { getProject, getSaveStatus, handleSaveStatus, getListProject } from '@/app/api/project';
 import PannellumViewer from '@/components/PannellumViewer';
 import VoteStats from "@/components/VoteStats";
 import CommentBox from "@/components/CommentBox";
+import Booking from "@/components/Booking";
 import { API_BASE_URL } from '@/utilities/config';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
+import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import { Star, MapPinHouse, CalendarDays } from "lucide-react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { timeAgo } from '@/utilities/functions';
 
 // Interface cho cấu hình MultiRes của Pannellum
 interface MultiResConfigPannellum {
@@ -96,12 +100,14 @@ export default function ProjectDetail() {
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [sceneReady, setSceneReady] = useState<boolean>(false);
   const params = useParams();
+  const [isBooking, setIsBooking] = useState<boolean>(false);
+  const [listInvoldedProject, setListInvoldedProject] = useState([]);
 
   const projectIdFromParams: Number = Number(params?.slug);
   const userInfor = useUser();
   const { openModal } = useAuthModal();
 
-  // get project detail
+  // get project detail and involded projects
   useEffect(() => {
     if (!projectIdFromParams) return;
     setIsLoadingProject(true);
@@ -109,6 +115,10 @@ export default function ProjectDetail() {
       try {
         getProject(projectIdFromParams)
           .then((data) => {
+            if (data.project.isLock) {
+              window.location.href = '/'
+              return
+            }
             const projectWithVote: ProjectData = {
               ...data.project,
               vote: data.vote,
@@ -119,6 +129,16 @@ export default function ProjectDetail() {
             if (firstScene && firstScene.id !== currentSceneId) {
               setCurrentSceneId(firstScene.id);
             }
+
+            const getListInvoldedProject = async () => {
+              try {
+                const res = await getListProject({ page: 1, limit: 6, query: { departureCity: data.project.departureCity, projectId: data.project.projectId, } })
+                setListInvoldedProject(res?.data.listProject || []);
+              } catch (error) {
+              }
+            }
+            getListInvoldedProject();
+
           })
           .catch((error) => {
             console.error('Failed to fetch project:', error);
@@ -145,7 +165,10 @@ export default function ProjectDetail() {
       }
       fetchSavedStatus();
     }
+
   }, [projectIdFromParams]);
+
+  console.log(listInvoldedProject)
 
 
   // set first scene to render
@@ -218,8 +241,6 @@ export default function ProjectDetail() {
 
   // handle change scene
   const handleSceneTransition = useCallback(async (nextSceneId: string) => {
-    console.log("🚀 Preloading scene:", nextSceneId);
-
     const targetScene = project?.scenes.find(s => s.id === nextSceneId);
     if (!targetScene) {
       console.warn(`🚫 Scene with id "${nextSceneId}" not found.`);
@@ -268,29 +289,6 @@ export default function ProjectDetail() {
     );
   };
 
-  // handle booking
-  const handleBooking = async () => {
-    if (!userInfor || !userInfor.userId) {
-      openModal(1);
-      return;
-    }
-    const contact = userInfor.phone || userInfor.email || 'thông tin liên hệ';
-    const message = `${userInfor.fullName || userInfor.userName || 'Khách hàng'} vừa đăng ký tư vấn tour "${project.title}. Liên hệ qua ${contact}"`;
-    try {
-      await createNoti({
-        projectId: projectIdFromParams,
-        projectName: project.title,
-        userIdTour: project.userId,
-        userId: userInfor.userId,
-        message: message,
-      });
-      alert(`✅ Nhân viên sẽ liên hệ tư vấn cho bạn qua ${contact} sớm nhất có thể. Xin cảm ơn!`);
-    } catch (error) {
-      console.error(error);
-      alert('❌ Gửi thông báo thất bại. Vui lòng thử lại sau.');
-    }
-  };
-
   const handleToggleSave = async () => {
     if (!userInfor || !userInfor.userId) {
       openModal(1);
@@ -307,10 +305,8 @@ export default function ProjectDetail() {
     }
   };
 
-  console.log(currentPannellumConfig)
-
   return (
-    <div className="w-3/4 mx-auto pt-4">
+    <div className="w-11/12 md:w-3/4 mx-auto pt-4">
       <h1 className="text-default-color text-2xl pb-4">{project.title}</h1>
       <p className='pb-5'>{project.description}</p>
       <img src={project.coverImage} alt="project-image-cover" className='w-full max-h-[450px] mb-5 select-none' />
@@ -318,7 +314,7 @@ export default function ProjectDetail() {
       {project.scenes.length > 0 && (
         <>
           <h2 className='fancy-text font-semibold text-xl mb-2.5'>Trải nghiệm du lịch 360° <span className="inline-block animate-bounce">✨</span></h2>
-          <main className="h-[80vh] flex items-center justify-center bg-gray-900 relative">
+          <main className="h-[270px] md:h-[80vh] flex items-center justify-center bg-gray-900 relative">
             {processedSceneData && currentPannellumConfig ? (
               <PannellumViewer
                 key={currentSceneId}
@@ -384,8 +380,8 @@ export default function ProjectDetail() {
         </>
       )}
 
-      <div className='flex justify-between items-start gap-8 mb-6 mt-5'>
-        <div className='w-2/3'>
+      <div className='md:flex justify-between items-start gap-8 mb-6 mt-5'>
+        <div className='md:w-2/3'>
           <div className="detail_tour">
             <p className="text-xl font-bold mb-2">Lịch trình tour</p>
             {project.tourSteps.map((step: any, index: number) => {
@@ -406,7 +402,7 @@ export default function ProjectDetail() {
             })}
           </div>
 
-          <div className="mt-6 w-full border rounded-lg bg-white p-4 shadow-sm">
+          <div className="mt-6 w-full border rounded-lg bg-white p-4 shadow-sm dark:bg-slate-200">
             {/* Tabs */}
             <div className="flex border-b mb-4">
               <button
@@ -431,7 +427,7 @@ export default function ProjectDetail() {
                 userInfor?.userId != project.userId &&
                 <button
                   onClick={handleToggleSave}
-                  className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-red-600 px-4 py-2"
+                  className="flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-red-600 px-4 py-2 cursor-pointer"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -467,7 +463,7 @@ export default function ProjectDetail() {
             )}
           </div>
         </div>
-        <div className="book_tour w-1/3 sticky top-4 mb-5">
+        <div className="md:w-1/3 md:sticky top-4 mb-5 mt-4 md:mt-0">
           <p className="text-xl font-bold mb-2">Đặt tour</p>
           <div className="flex flex-col gap-4">
             <span>
@@ -481,11 +477,127 @@ export default function ProjectDetail() {
               <span className="text-default-color ml-1">{rangePrice.find(p => p.id === Number(project.price))?.value || 'Không xác định'} đ</span>
             </div>
             {project.sale ? <> <p><span className='fancy-text'>Ưu đãi:</span> {project.sale}</p></> : null}
-            <div className="flex justify-center">{userInfor?.userId != project.userId && <Button className='cursor-pointer' onClick={handleBooking}>Tư vấn - Đặt tour</Button>}
+            <div className="flex justify-center">{userInfor?.userId != project.userId && <Button className='cursor-pointer' onClick={() => setIsBooking(true)}>Tư vấn - Đặt tour</Button>}
             </div>
           </div>
         </div>
       </div>
+
+      {/* list involded tours */}
+      {listInvoldedProject.length > 0 &&
+        <div className='mb-10'>
+          <p className='mt-10 mb-4 text-2xl text-default-color'>TOUR LIÊN QUAN</p>
+          <Swiper
+            modules={[Navigation]}
+            spaceBetween={16}
+            // slidesPerView={3}
+            navigation
+            loop
+            className="py-2"
+            breakpoints={{
+              640: { slidesPerView: 1 },
+              1024: { slidesPerView: 2 },
+              1280: { slidesPerView: 3 },
+            }}
+          // style={{ padding: '0 40px' }}
+          >
+            {listInvoldedProject.map((project: any, index: any) => {
+              const images = project.scenes?.map((scene: any) => `${API_BASE_URL}${scene.originalImage}`) || [];
+              return (
+                <>
+                  <SwiperSlide key={index}>
+                    <div className="h-full w-full">
+                      <motion.div
+                        key={project._id}
+                        className="flex flex-col w-full gap-2 rounded-lg overflow-hidden shadow-lg shadow-color-dark h-fit select-none border border-transparent hover:border-sky-300 dark:border-[gray]"
+                        initial={{ opacity: 0, x: 100 }} // ẩn và dịch sang phải
+                        whileInView={{ opacity: 1, x: 0 }} // hiện và về đúng vị trí
+                        viewport={{ once: true, amount: 0.2 }} // chỉ animate khi visible lần đầu
+                        transition={{ duration: 0.5, delay: index * 0.1 }} // delay cho từng card
+                      >
+                        <div>
+                          <Swiper
+                            modules={[Navigation, Pagination]}
+                            spaceBetween={30}
+                            slidesPerView={1}
+                            loop={true}
+                            autoplay={{ delay: 3000 }}
+                            pagination={{ clickable: true }}
+                            navigation={true}
+                          >
+                            {(images.length > 0 ? images : [project.coverImage]).map((img: any, index: any) => (
+                              <SwiperSlide key={index}>
+                                <img
+                                  src={img || '/images/no-image.jpg'}
+                                  alt={`Slide ${index}`}
+                                  className="w-full h-40 object-cover"
+                                  width={30}
+                                  height={30}
+                                  loading="lazy"
+                                />
+                              </SwiperSlide>
+                            ))}
+                          </Swiper>
+                        </div>
+                        <div className="px-3 py-2 flex flex-col gap-2 h-full">
+                          <Link
+                            href={`/tour/${project.projectId}`}
+                            className="font-semibold line-clamp-2 overflow-hidden text-ellipsis cursor-pointer h-[48]"
+                          >
+                            {project.title}
+                          </Link>
+                          <div className="relative group flex gap-1 items-center w-fit">
+                            {Array.from({ length: 5 }, (_, i) => (
+                              <Star
+                                key={i}
+                                size={20}
+                                className={i < Math.round(project.vote?.average || 0) ? "text-yellow-400" : "text-gray-300"}
+                              />
+                            ))}
+                            <div className="absolute left-0 bottom-full mb-1 bg-black text-white text-xs px-2 py-1 rounded opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out pointer-events-none whitespace-nowrap z-10">
+                              {project.vote?.total || 0} lượt đánh giá
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <MapPinHouse size={20} />
+                            <p className="line-clamp-2 overflow-hidden text-ellipsis">
+                              Khởi hành: {listCity.find((item: any) => item._id === project.departureCity)?.name || "Không xác định"}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <CalendarDays size={20} />
+                            <p className="line-clamp-2 overflow-hidden text-ellipsis">
+                              Ngày khởi hành: {project.departureDate}
+                            </p>
+                          </div>
+                          <p className="bg-sky-100 w-fit px-2 leading-6 text-sky-500 rounded-lg h-[24px]">
+                            {project.timeLastBook ? (
+                              <span>Vừa được đặt {timeAgo(project.timeLastBook)}</span>
+                            ) : (
+                              <span>Đang chờ đặt chỗ</span>
+                            )
+                            }
+                          </p>
+                          <p className="flex justify-end text-lg text-default-color font-semibold mt-auto">
+                            {(() => {
+                              const match = rangePrice.find((p) => p.id === Number(project.price));
+                              return match ? `Từ ${match.value}` : `Giá: ${project.price}đ`;
+                            })()}
+                          </p>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </SwiperSlide>
+                </>
+              )
+            }
+            )}
+          </Swiper>
+        </div>
+      }
+
+      {isBooking && <Booking project={project} setIsBooking={setIsBooking} />}
     </div>
+
   );
 }

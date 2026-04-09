@@ -89,7 +89,7 @@ export default function CommentBox({ projectId }: CommentBoxProps) {
   };
 
   return (
-    <div className="mt-6 w-full border rounded-md pt-4 px-4 bg-gray-50">
+    <div className="mt-6 w-full border rounded-md pt-4 px-4 bg-gray-50 dark:bg-[black]">
       <h3 className="text-lg font-semibold mb-4">Bình luận</h3>
 
       {/* Khung nhập bình luận */}
@@ -122,8 +122,8 @@ export default function CommentBox({ projectId }: CommentBoxProps) {
             }
             <div className="flex-1">
               {/* Khung tên + bình luận */}
-              <div className="bg-gray-100 border border-gray-300 rounded-lg p-3">
-                <p className="font-medium text-gray-800">{c.userName}</p>
+              <div className="bg-gray-100 border border-gray-300 rounded-lg p-3 dark:bg-[#222222] dark:border-0">
+                <p className="font-medium text-gray-800 dark:text-[white]">{c.userName}</p>
 
                 {editingId === c._id ? (
                   <>
@@ -148,7 +148,7 @@ export default function CommentBox({ projectId }: CommentBoxProps) {
                     </div>
                   </>
                 ) : (
-                  <p className="mt-1 text-gray-800 whitespace-pre-line">{c.content}</p>
+                  <p className="mt-1 text-gray-800 whitespace-pre-line dark:text-[white]">{c.content}</p>
                 )}
               </div>
 

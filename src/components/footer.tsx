@@ -4,7 +4,7 @@ import { Button } from "./ui/button"
 import { Facebook, Twitter, Youtube, Download } from 'lucide-react'
 export default function Footer() {
     return (
-        <div className="bg-slate-200 pb-10 bg-color-dark">
+        <div className="bg-slate-200 pb-10 bg-color-dark dark:bg-[black] dark:border-t">
             <div className="m-auto px-7 py-3 pt-10 w-full xl:w-1200px">
                 <Image src="/images/logo-site.png" alt="logo-site" width={200} height={45} />
                 <div className="mt-4 flex flex-col lg:flex-row gap-4 md:gap-7 lg:gap-7 xl:gap-28">
