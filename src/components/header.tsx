@@ -175,12 +175,11 @@ export default function Header() {
       <header className="flex justify-between px-3 xl:px-16 py-3 h-20">
         <div className="flex items-center gap-5 ">
           <Link href='/'>
-            <Image
+            <img
               src="/images/logo-site.png"
               alt="logo-site"
               height={62}
               width={200}
-              priority
             />
           </Link>
         </div>
