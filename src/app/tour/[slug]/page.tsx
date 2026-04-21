@@ -15,8 +15,7 @@ import Booking from "@/components/Booking";
 import { API_BASE_URL } from '@/utilities/config';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
+import 'swiper/swiper-bundle.css';
 import { Star, MapPinHouse, CalendarDays } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -167,9 +166,6 @@ export default function ProjectDetail() {
     }
 
   }, [projectIdFromParams]);
-
-  console.log(listInvoldedProject)
-
 
   // set first scene to render
   useEffect(() => {
@@ -353,7 +349,6 @@ export default function ProjectDetail() {
               navigation
               loop
               className="py-2"
-            // style={{ padding: '0 40px' }}
             >
               {project.scenes.map((scene, index) => (
                 <SwiperSlide key={index}>
@@ -488,21 +483,20 @@ export default function ProjectDetail() {
         <div className='mb-10'>
           <p className='mt-10 mb-4 text-2xl text-default-color'>TOUR LIÊN QUAN</p>
           <Swiper
-            modules={[Navigation]}
+            modules={[Navigation, Pagination]}
+            navigation={true}
+            grabCursor={true}
             spaceBetween={16}
-            // slidesPerView={3}
-            navigation
             loop
-            className="py-2"
+            className="py-2 select-none list-tour-invold-swiper-arrow"
             breakpoints={{
               640: { slidesPerView: 1 },
               1024: { slidesPerView: 2 },
               1280: { slidesPerView: 3 },
             }}
-          // style={{ padding: '0 40px' }}
           >
             {listInvoldedProject.map((project: any, index: any) => {
-              const images = project.scenes?.map((scene: any) => `${API_BASE_URL}${scene.originalImage}`) || [];
+              const images = [project.coverImage, ...project.scenes?.map((scene: any) => `${API_BASE_URL}${scene.originalImage}`)];
               return (
                 <>
                   <SwiperSlide key={index}>
@@ -516,28 +510,38 @@ export default function ProjectDetail() {
                         transition={{ duration: 0.5, delay: index * 0.1 }} // delay cho từng card
                       >
                         <div>
-                          <Swiper
-                            modules={[Navigation, Pagination]}
-                            spaceBetween={30}
-                            slidesPerView={1}
-                            loop={true}
-                            autoplay={{ delay: 3000 }}
-                            pagination={{ clickable: true }}
-                            navigation={true}
-                          >
-                            {(images.length > 0 ? images : [project.coverImage]).map((img: any, index: any) => (
-                              <SwiperSlide key={index}>
-                                <img
-                                  src={img || '/images/no-image.jpg'}
-                                  alt={`Slide ${index}`}
-                                  className="w-full h-40 object-cover"
-                                  width={30}
-                                  height={30}
-                                  loading="lazy"
-                                />
-                              </SwiperSlide>
-                            ))}
-                          </Swiper>
+                          {
+                            images.length === 1 ? (
+                              <img
+                                src={images[0] || '/images/no-image.jpg'}
+                                alt={`image tour`}
+                                className="w-full h-40 object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <Swiper
+                                modules={[Navigation, Pagination]}
+                                spaceBetween={30}
+                                slidesPerView={1}
+                                loop={true}
+                                autoplay={{ delay: 3000 }}
+                                pagination={{ clickable: true }}
+                                navigation={true}
+                                className='image-tour-swiper-arrow'
+                              >
+                                {images.map((img: string, index: number) => (
+                                  <SwiperSlide key={index}>
+                                    <img
+                                      src={img || '/images/no-image.jpg'}
+                                      alt={`Slide ${index}`}
+                                      className="w-full h-40 object-cover"
+                                      loading="lazy"
+                                    />
+                                  </SwiperSlide>
+                                ))}
+                              </Swiper>
+                            )
+                          }
                         </div>
                         <div className="px-3 py-2 flex flex-col gap-2 h-full">
                           <Link

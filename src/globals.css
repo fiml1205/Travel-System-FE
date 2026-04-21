@@ -208,6 +208,24 @@
   }
 }
 
+@keyframes rainbowText2 {
+  0% {
+    color: #f50606;
+  }
+
+  35% {
+    color: #00ff00;
+  }
+
+  65% {
+    color: #071eb4;
+  }
+
+  100% {
+    color: #f50606;
+  }
+}
+
 .fancy-text {
   animation: rainbowText 3s infinite;
 }
@@ -249,4 +267,35 @@
 
 .create-tour-viewer360 {
   height: 600px !important;
+}
+
+/* config swiper arrow */
+.swiper-button-next,
+.swiper-button-prev {
+  transform: scale(0.8);
+  transition: all 0.25s ease;
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  transform: scale(1.5);
+}
+
+.swiper-button-prev,
+.swiper-button-next {
+  animation: rainbowText2 3s infinite;
+}
+
+.list-tour-invold-swiper-arrow .swiper-button-prev::after {
+  position: absolute;
+  right: 5px;
+}
+
+.list-tour-invold-swiper-arrow .swiper-button-next::after {
+  position: absolute;
+  left: 5px;
+}
+
+.image-tour-swiper-arrow .swiper-button-prev::after, .image-tour-swiper-arrow .swiper-button-next::after {
+  position: static;
 }

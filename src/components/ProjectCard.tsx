@@ -27,7 +27,7 @@ export default function ProjectCard({
                 {images.length === 1 ? (
                     <img
                         src={images[0] || '/images/no-image.jpg'}
-                        alt={`Slide ${index}`}
+                        alt={`image tour`}
                         className="w-full h-40 object-cover"
                         loading="lazy"
                     />
